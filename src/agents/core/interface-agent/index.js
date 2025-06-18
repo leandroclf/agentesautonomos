@@ -10,35 +10,183 @@
  */
 
 const express = require('express');
-const cors = require('cors');
 const helmet = require('helmet');
-const morgan = require('morgan');
-const { v4: uuidv4 } = require('uuid');
-const config = require('../../../config');
-const SQSService = require('../../../services/sqs-service');
-const Logger = require('../../../utils/logger');
-const HealthCheck = require('../../../utils/health-check');
+const cors = require('cors');
+const rateLimit = require('express-rate-limit');
+const compression = require('compression');
+const winston = require('winston');
+const promClient = require('prom-client');
+const SQSService = require('../../../shared/services/sqsService');
+const InterfaceService = require('./services/interfaceService');
+const config = require('../config');
 
 class InterfaceAgent {
   constructor() {
     this.agentId = 'interface-agent';
-    this.version = '1.0.0';
-    this.status = 'initializing';
+    this.logger = this.setupLogger();
     this.app = express();
+    this.server = null;
     this.sqsService = new SQSService();
-    this.logger = new Logger(this.agentId);
-    this.healthCheck = new HealthCheck(this.agentId);
-    this.metrics = {
-      requestsReceived: 0,
-      requestsProcessed: 0,
-      requestsFailed: 0,
-      averageResponseTime: 0,
-      lastRequestTime: null
-    };
+    this.metrics = this.setupMetrics();
+    this.interfaceService = null;
     
     this.setupMiddleware();
     this.setupRoutes();
-    this.setupErrorHandling();
+  }
+
+  setupLogger() {
+    return winston.createLogger({
+      level: config.shared.logging.level,
+      format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.errors({ stack: true }),
+        config.shared.logging.format === 'json' 
+          ? winston.format.json()
+          : winston.format.simple()
+      ),
+      defaultMeta: { service: this.agentId },
+      transports: [
+        ...(config.shared.logging.enableConsole ? [
+          new winston.transports.Console()
+        ] : []),
+        ...(config.shared.logging.enableFile ? [
+          new winston.transports.File({ 
+            filename: `${config.shared.logging.logDirectory}/${this.agentId}.log`,
+            maxsize: config.shared.logging.maxFileSize,
+            maxFiles: config.shared.logging.maxFiles
+          })
+        ] : [])
+      ]
+    });
+  }
+
+  setupMetrics() {
+    const register = new promClient.Registry();
+    
+    const metrics = {
+      // HTTP Metrics
+      httpRequests: new promClient.Counter({
+        name: 'interface_agent_http_requests_total',
+        help: 'Total number of HTTP requests',
+        labelNames: ['method', 'route', 'status'],
+        registers: [register]
+      }),
+      requestDuration: new promClient.Histogram({
+        name: 'interface_agent_request_duration_seconds',
+        help: 'Duration of HTTP requests in seconds',
+        labelNames: ['method', 'endpoint'],
+        buckets: config.shared.metrics.histogramBuckets,
+        registers: [register]
+      }),
+      
+      // Event Metrics
+      eventsSubmitted: new promClient.Counter({
+        name: 'interface_agent_events_submitted_total',
+        help: 'Total number of events submitted',
+        labelNames: ['type'],
+        registers: [register]
+      }),
+      eventValidationErrors: new promClient.Counter({
+        name: 'interface_agent_event_validation_errors_total',
+        help: 'Total number of event validation errors',
+        registers: [register]
+      }),
+      eventSizeErrors: new promClient.Counter({
+        name: 'interface_agent_event_size_errors_total',
+        help: 'Total number of event size errors',
+        registers: [register]
+      }),
+      eventSubmissionErrors: new promClient.Counter({
+        name: 'interface_agent_event_submission_errors_total',
+        help: 'Total number of event submission errors',
+        registers: [register]
+      }),
+      eventProcessingDuration: new promClient.Histogram({
+        name: 'interface_agent_event_processing_duration_seconds',
+        help: 'Duration of event processing in seconds',
+        labelNames: ['type'],
+        buckets: config.shared.metrics.histogramBuckets,
+        registers: [register]
+      }),
+      
+      // Status Query Metrics
+      statusCacheHits: new promClient.Counter({
+        name: 'interface_agent_status_cache_hits_total',
+        help: 'Total number of status cache hits',
+        registers: [register]
+      }),
+      statusCacheMisses: new promClient.Counter({
+        name: 'interface_agent_status_cache_misses_total',
+        help: 'Total number of status cache misses',
+        registers: [register]
+      }),
+      statusQueryErrors: new promClient.Counter({
+        name: 'interface_agent_status_query_errors_total',
+        help: 'Total number of status query errors',
+        registers: [register]
+      }),
+      listEventsErrors: new promClient.Counter({
+        name: 'interface_agent_list_events_errors_total',
+        help: 'Total number of list events errors',
+        registers: [register]
+      }),
+      
+      // WebSocket Metrics
+      websocketConnections: new promClient.Counter({
+        name: 'interface_agent_websocket_connections_total',
+        help: 'Total number of WebSocket connections',
+        registers: [register]
+      }),
+      websocketActiveConnections: new promClient.Gauge({
+        name: 'interface_agent_websocket_active_connections',
+        help: 'Number of active WebSocket connections',
+        registers: [register]
+      }),
+      websocketDisconnections: new promClient.Counter({
+        name: 'interface_agent_websocket_disconnections_total',
+        help: 'Total number of WebSocket disconnections',
+        labelNames: ['code'],
+        registers: [register]
+      }),
+      websocketMessagesReceived: new promClient.Counter({
+        name: 'interface_agent_websocket_messages_received_total',
+        help: 'Total number of WebSocket messages received',
+        labelNames: ['type'],
+        registers: [register]
+      }),
+      websocketMessagesSent: new promClient.Counter({
+        name: 'interface_agent_websocket_messages_sent_total',
+        help: 'Total number of WebSocket messages sent',
+        labelNames: ['type'],
+        registers: [register]
+      }),
+      websocketMessageErrors: new promClient.Counter({
+        name: 'interface_agent_websocket_message_errors_total',
+        help: 'Total number of WebSocket message errors',
+        registers: [register]
+      }),
+      websocketConnectionErrors: new promClient.Counter({
+        name: 'interface_agent_websocket_connection_errors_total',
+        help: 'Total number of WebSocket connection errors',
+        registers: [register]
+      }),
+      websocketServerErrors: new promClient.Counter({
+        name: 'interface_agent_websocket_server_errors_total',
+        help: 'Total number of WebSocket server errors',
+        registers: [register]
+      }),
+      websocketSubscriptions: new promClient.Counter({
+        name: 'interface_agent_websocket_subscriptions_total',
+        help: 'Total number of WebSocket subscriptions',
+        labelNames: ['topics'],
+        registers: [register]
+      })
+    };
+    
+    // Registrar métricas padrão do Node.js
+    promClient.collectDefaultMetrics({ register });
+    
+    return { ...metrics, register };
   }
   
   /**

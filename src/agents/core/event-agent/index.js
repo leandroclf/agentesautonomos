@@ -14,35 +14,207 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
-const config = require('../../../config');
-const SQSService = require('../../../services/sqs-service');
-const Logger = require('../../../utils/logger');
+const compression = require('compression');
+const winston = require('winston');
+const promClient = require('prom-client');
+const SQSService = require('../../../shared/services/sqsService');
+const EventService = require('./services/eventService');
+const config = require('../config');
 
 class EventAgent {
   constructor() {
     this.agentId = 'event-agent';
-    this.logger = new Logger(this.agentId);
+    this.logger = this.setupLogger();
     this.app = express();
-    this.sqsService = null;
-    this.isRunning = false;
     this.server = null;
-    
-    // Métricas
-    this.metrics = {
-      eventsReceived: 0,
-      eventsProcessed: 0,
-      eventsFailed: 0,
-      eventsRetried: 0,
-      averageProcessingTime: 0,
-      lastProcessedAt: null,
-      startedAt: new Date().toISOString()
-    };
-    
-    // Estado de eventos em processamento
-    this.processingEvents = new Map();
+    this.sqsService = new SQSService();
+    this.metrics = this.setupMetrics();
+    this.eventService = null;
+    this.isShuttingDown = false;
     
     this.setupMiddleware();
     this.setupRoutes();
+  }
+
+  setupLogger() {
+    return winston.createLogger({
+      level: config.shared.logging.level,
+      format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.errors({ stack: true }),
+        config.shared.logging.format === 'json' 
+          ? winston.format.json()
+          : winston.format.simple()
+      ),
+      defaultMeta: { service: this.agentId },
+      transports: [
+        ...(config.shared.logging.enableConsole ? [
+          new winston.transports.Console()
+        ] : []),
+        ...(config.shared.logging.enableFile ? [
+          new winston.transports.File({ 
+            filename: `${config.shared.logging.logDirectory}/${this.agentId}.log`,
+            maxsize: config.shared.logging.maxFileSize,
+            maxFiles: config.shared.logging.maxFiles
+          })
+        ] : [])
+      ]
+    });
+  }
+
+  setupMetrics() {
+    const register = new promClient.Registry();
+    
+    const metrics = {
+      // HTTP Metrics
+      httpRequests: new promClient.Counter({
+        name: 'event_agent_http_requests_total',
+        help: 'Total number of HTTP requests',
+        labelNames: ['method', 'route', 'status'],
+        registers: [register]
+      }),
+      requestDuration: new promClient.Histogram({
+        name: 'event_agent_request_duration_seconds',
+        help: 'Duration of HTTP requests in seconds',
+        labelNames: ['method', 'endpoint'],
+        buckets: config.shared.metrics.histogramBuckets,
+        registers: [register]
+      }),
+      
+      // Event Processing Metrics
+      eventsReceived: new promClient.Counter({
+        name: 'event_agent_events_received_total',
+        help: 'Total number of events received',
+        labelNames: ['type', 'source'],
+        registers: [register]
+      }),
+      eventsProcessed: new promClient.Counter({
+        name: 'event_agent_events_processed_total',
+        help: 'Total number of events processed successfully',
+        labelNames: ['type'],
+        registers: [register]
+      }),
+      eventProcessingErrors: new promClient.Counter({
+        name: 'event_agent_event_processing_errors_total',
+        help: 'Total number of event processing errors',
+        labelNames: ['type', 'error_type'],
+        registers: [register]
+      }),
+      eventProcessingDuration: new promClient.Histogram({
+        name: 'event_agent_event_processing_duration_seconds',
+        help: 'Duration of event processing in seconds',
+        labelNames: ['type'],
+        buckets: config.shared.metrics.histogramBuckets,
+        registers: [register]
+      }),
+      duplicateEvents: new promClient.Counter({
+        name: 'event_agent_duplicate_events_total',
+        help: 'Total number of duplicate events detected',
+        labelNames: ['type'],
+        registers: [register]
+      }),
+      invalidEvents: new promClient.Counter({
+        name: 'event_agent_invalid_events_total',
+        help: 'Total number of invalid events',
+        labelNames: ['type', 'validation_error'],
+        registers: [register]
+      }),
+      
+      // SQS Metrics
+      sqsMessagesReceived: new promClient.Counter({
+        name: 'event_agent_sqs_messages_received_total',
+        help: 'Total number of SQS messages received',
+        labelNames: ['queue'],
+        registers: [register]
+      }),
+      sqsMessagesSent: new promClient.Counter({
+        name: 'event_agent_sqs_messages_sent_total',
+        help: 'Total number of SQS messages sent',
+        labelNames: ['queue'],
+        registers: [register]
+      }),
+      sqsErrors: new promClient.Counter({
+        name: 'event_agent_sqs_errors_total',
+        help: 'Total number of SQS errors',
+        labelNames: ['operation', 'error_type'],
+        registers: [register]
+      }),
+      
+      // Coordination Metrics
+      planningRequests: new promClient.Counter({
+        name: 'event_agent_planning_requests_total',
+        help: 'Total number of planning requests sent',
+        labelNames: ['event_type'],
+        registers: [register]
+      }),
+      planningResponses: new promClient.Counter({
+        name: 'event_agent_planning_responses_total',
+        help: 'Total number of planning responses received',
+        labelNames: ['status'],
+        registers: [register]
+      }),
+      coordinationErrors: new promClient.Counter({
+        name: 'event_agent_coordination_errors_total',
+        help: 'Total number of coordination errors',
+        labelNames: ['target_agent'],
+        registers: [register]
+      }),
+      
+      // State Management Metrics
+      stateUpdates: new promClient.Counter({
+        name: 'event_agent_state_updates_total',
+        help: 'Total number of state updates',
+        labelNames: ['event_id'],
+        registers: [register]
+      }),
+      stateErrors: new promClient.Counter({
+        name: 'event_agent_state_errors_total',
+        help: 'Total number of state management errors',
+        registers: [register]
+      }),
+      
+      // Retry Metrics
+      retryAttempts: new promClient.Counter({
+        name: 'event_agent_retry_attempts_total',
+        help: 'Total number of retry attempts',
+        labelNames: ['operation', 'attempt'],
+        registers: [register]
+      }),
+      retrySuccesses: new promClient.Counter({
+        name: 'event_agent_retry_successes_total',
+        help: 'Total number of successful retries',
+        labelNames: ['operation'],
+        registers: [register]
+      }),
+      retryFailures: new promClient.Counter({
+        name: 'event_agent_retry_failures_total',
+        help: 'Total number of failed retries',
+        labelNames: ['operation'],
+        registers: [register]
+      }),
+      
+      // Performance Metrics
+      activeEvents: new promClient.Gauge({
+        name: 'event_agent_active_events',
+        help: 'Number of currently active events',
+        registers: [register]
+      }),
+      queueDepth: new promClient.Gauge({
+        name: 'event_agent_queue_depth',
+        help: 'Current depth of event processing queue',
+        registers: [register]
+      }),
+      memoryUsage: new promClient.Gauge({
+        name: 'event_agent_memory_usage_bytes',
+        help: 'Current memory usage in bytes',
+        registers: [register]
+      })
+    };
+    
+    // Registrar métricas padrão do Node.js
+    promClient.collectDefaultMetrics({ register });
+    
+    return { ...metrics, register };
   }
   
   /**

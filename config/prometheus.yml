@@ -1,0 +1,64 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Interface Agent
+  - job_name: 'interface-agent'
+    static_configs:
+      - targets: ['interface-agent:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # Event Agent
+  - job_name: 'event-agent'
+    static_configs:
+      - targets: ['event-agent:3001']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # Planning Agent
+  - job_name: 'planning-agent'
+    static_configs:
+      - targets: ['planning-agent:3002']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # Execution Agent
+  - job_name: 'execution-agent'
+    static_configs:
+      - targets: ['execution-agent:3003']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # SQS Local (ElasticMQ)
+  - job_name: 'sqs-local'
+    static_configs:
+      - targets: ['sqs-local:9325']
+    metrics_path: '/'
+    scrape_interval: 60s
+    scrape_timeout: 10s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  # - "alert_rules.yml"
+  # - "recording_rules.yml"

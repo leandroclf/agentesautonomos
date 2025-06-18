@@ -1,190 +1,312 @@
-# 🤖 Agentes Autônomos
+# Sistema de Agentes Autônomos
 
-Sistema distribuído de agentes autônomos para processamento de eventos, automação de tarefas e orquestração inteligente.
+Um sistema distribuído de agentes autônomos para processamento de eventos, planejamento e execução de tarefas, construído com Node.js e AWS SQS.
 
 ## 🏗️ Arquitetura
 
-O sistema é baseado em uma arquitetura de microserviços com agentes especializados que se comunicam via mensageria assíncrona (SQS) e mantêm estado compartilhado.
+O sistema é composto por 4 agentes principais:
 
-### Componentes Principais
+- **Interface Agent** (Porta 3000): Ponto de entrada para requisições externas
+- **Event Agent** (Porta 3001): Processamento e roteamento de eventos
+- **Planning Agent** (Porta 3002): Geração de planos de execução
+- **Execution Agent** (Porta 3003): Execução de planos e tarefas
 
-- **Agentes Core**: Processamento principal (State Management, Event Processing, Policy Management)
-- **Agentes Auxiliares**: Funções de suporte (Monitoring, Notification, Audit)
-- **Infraestrutura**: AWS SQS, S3, PostgreSQL, Redis
-- **Observabilidade**: Métricas, logs, health checks e DLQ monitoring
+### Comunicação
+
+- **HTTP**: Para APIs REST e health checks
+- **SQS**: Para comunicação assíncrona entre agentes
+- **Prometheus**: Para coleta de métricas
+- **Grafana**: Para visualização e monitoramento
+
+## 🚀 Início Rápido
+
+### Pré-requisitos
+
+- Node.js 18+
+- Docker e Docker Compose
+- npm ou yarn
+
+### Instalação
+
+1. **Clone o repositório**
+   ```bash
+   git clone <repository-url>
+   cd agentesautonomos
+   ```
+
+2. **Instale as dependências**
+   ```bash
+   npm install
+   ```
+
+3. **Configure as variáveis de ambiente**
+   ```bash
+   cp .env.example .env
+   # Edite o arquivo .env conforme necessário
+   ```
+
+### Execução com Docker (Recomendado)
+
+```bash
+# Inicia todos os serviços
+docker-compose up -d
+
+# Verifica o status
+docker-compose ps
+
+# Visualiza logs
+docker-compose logs -f
+```
+
+### Execução Local
+
+```bash
+# Inicia todos os agentes
+node scripts/start-all.js
+
+# Ou inicie individualmente
+node src/agents/core/interface-agent/index.js
+node src/agents/core/event-agent/index.js
+node src/agents/core/planning-agent/index.js
+node src/agents/core/execution-agent/index.js
+```
+
+## 📊 Monitoramento
+
+### URLs de Acesso
+
+- **Interface Agent**: http://localhost:3000
+- **Event Agent**: http://localhost:3001
+- **Planning Agent**: http://localhost:3002
+- **Execution Agent**: http://localhost:3003
+- **Prometheus**: http://localhost:9090
+- **Grafana**: http://localhost:3100 (admin/admin)
+- **SQS Local**: http://localhost:9324
+
+### Health Checks
+
+```bash
+# Verifica saúde de todos os agentes
+curl http://localhost:3000/health
+curl http://localhost:3001/health
+curl http://localhost:3002/health
+curl http://localhost:3003/health
+```
+
+### Métricas
+
+```bash
+# Métricas básicas
+curl http://localhost:3000/metrics
+
+# Métricas detalhadas
+curl http://localhost:3000/metrics/detailed
+```
+
+## 🔧 Configuração
+
+### Variáveis de Ambiente
+
+```env
+# Configuração do Agente
+NODE_ENV=development
+PORT=3000
+AGENT_NAME=interface
+
+# AWS/SQS
+AWS_ACCESS_KEY_ID=local
+AWS_SECRET_ACCESS_KEY=local
+AWS_REGION=us-east-1
+SQS_ENDPOINT=http://localhost:9324
+
+# Outros Agentes
+EVENT_AGENT_HOST=localhost
+EVENT_AGENT_PORT=3001
+PLANNING_AGENT_HOST=localhost
+PLANNING_AGENT_PORT=3002
+EXECUTION_AGENT_HOST=localhost
+EXECUTION_AGENT_PORT=3003
+
+# Logging
+LOG_LEVEL=info
+LOG_FORMAT=json
+
+# Métricas
+METRICS_ENABLED=true
+METRICS_PORT=9464
+```
+
+### Configuração SQS
+
+O sistema usa ElasticMQ para simular SQS localmente. As filas são configuradas automaticamente:
+
+- `interface-events`: Eventos do Interface Agent
+- `event-processing`: Processamento de eventos
+- `planning-requests`: Solicitações de planejamento
+- `execution-requests`: Solicitações de execução
+- `notifications`: Notificações do sistema
+- `status-updates`: Atualizações de status
+
+## 📝 API Reference
+
+### Interface Agent
+
+```bash
+# Criar evento
+POST /events
+{
+  "type": "user_request",
+  "data": {
+    "action": "process_data",
+    "parameters": {}
+  }
+}
+
+# Listar eventos
+GET /events
+
+# Status do evento
+GET /events/:id/status
+```
+
+### Event Agent
+
+```bash
+# Processar evento
+POST /process
+{
+  "eventId": "uuid",
+  "type": "user_request",
+  "data": {}
+}
+
+# Histórico de eventos
+GET /events/history
+```
+
+### Planning Agent
+
+```bash
+# Criar plano
+POST /plans
+{
+  "eventId": "uuid",
+  "requirements": {
+    "action": "process_data",
+    "constraints": []
+  }
+}
+
+# Listar planos
+GET /plans
+
+# Detalhes do plano
+GET /plans/:id
+```
+
+### Execution Agent
+
+```bash
+# Executar plano
+POST /execute
+{
+  "planId": "uuid",
+  "priority": "normal"
+}
+
+# Status da execução
+GET /executions/:id/status
+
+# Parar execução
+POST /executions/:id/stop
+
+# Logs da execução
+GET /executions/:id/logs
+```
+
+## 🧪 Testes
+
+```bash
+# Executar todos os testes
+npm test
+
+# Testes unitários
+npm run test:unit
+
+# Testes de integração
+npm run test:integration
+
+# Testes end-to-end
+npm run test:e2e
+
+# Coverage
+npm run test:coverage
+```
+
+## 🔍 Troubleshooting
+
+### Problemas Comuns
+
+1. **Agentes não iniciam**
+   - Verifique se as portas estão disponíveis
+   - Confirme as variáveis de ambiente
+   - Verifique os logs: `docker-compose logs <service>`
+
+2. **SQS não conecta**
+   - Verifique se o ElasticMQ está rodando
+   - Confirme o endpoint SQS nas variáveis de ambiente
+   - Teste: `curl http://localhost:9324`
+
+3. **Métricas não aparecem**
+   - Verifique se o Prometheus está coletando dados
+   - Confirme a configuração em `config/prometheus.yml`
+   - Verifique os targets no Prometheus UI
+
+### Logs
+
+```bash
+# Logs de todos os serviços
+docker-compose logs -f
+
+# Logs de um serviço específico
+docker-compose logs -f interface-agent
+
+# Logs locais
+tail -f logs/interface-agent.log
+```
 
 ## 📁 Estrutura do Projeto
 
 ```
 ├── src/
 │   ├── agents/
-│   │   ├── core/              # Agentes principais
-│   │   │   ├── state-management/
-│   │   │   ├── event-processing/
-│   │   │   ├── policy-management/
-│   │   │   └── schema-registry/
-│   │   └── auxiliary/         # Agentes auxiliares
-│   │       ├── monitoring/
-│   │       ├── notification/
-│   │       └── audit/
-│   ├── utils/                 # Utilitários compartilhados
-│   │   ├── logger.js
-│   │   ├── observability.js
-│   │   └── metrics-server.js
-│   ├── config/                # Configurações
-│   └── mocks/                 # APIs mock para desenvolvimento
-├── infrastructure/            # Configurações de infraestrutura
-│   ├── aws/
-│   ├── kubernetes/
-│   ├── helm/
-│   └── docker/
-├── tests/                     # Testes automatizados
-├── scripts/                   # Scripts de automação
-├── docs/                      # Documentação técnica
-└── docker-compose.yml         # Ambiente local
+│   │   ├── core/           # Agentes principais
+│   │   └── shared/         # Serviços compartilhados
+│   ├── config/             # Configurações
+│   └── utils/              # Utilitários
+├── config/                 # Configurações externas
+├── docker/                 # Dockerfiles
+├── docs/                   # Documentação
+├── scripts/                # Scripts de automação
+└── tests/                  # Testes
 ```
-
-## 🚀 Execução Local
-
-### Pré-requisitos
-
-- Node.js 18+
-- Docker e Docker Compose
-- AWS CLI (opcional, para produção)
-
-### Configuração Inicial
-
-1. **Clone e instale dependências:**
-   ```bash
-   git clone <repository>
-   cd agentesautonomos
-   npm install
-   ```
-
-2. **Configure variáveis de ambiente:**
-   ```bash
-   cp .env.template .env
-   # Edite .env conforme necessário
-   ```
-
-3. **Inicie a infraestrutura local:**
-   ```bash
-   docker-compose up -d
-   ```
-
-4. **Configure AWS/LocalStack:**
-   ```bash
-   # Windows PowerShell
-   .\scripts\setup-aws.ps1
-   
-   # Linux/Mac
-   chmod +x scripts/setup-aws.sh
-   ./scripts/setup-aws.sh
-   ```
-
-### Executando o Sistema
-
-#### Opção 1: Sistema Completo
-```bash
-npm start
-```
-
-#### Opção 2: Componentes Individuais
-
-**APIs Mock (desenvolvimento):**
-```bash
-node scripts/start-all-mocks.js
-```
-
-**Servidor de Métricas:**
-```bash
-node src/utils/metrics-server.js
-```
-
-**Agentes Específicos:**
-```bash
-# State Management Agent
-node src/agents/core/state-management/index.js
-
-# Event Processing Agent
-node src/agents/core/event-processing/index.js
-```
-
-### Monitoramento e Observabilidade
-
-- **Dashboard de Métricas**: http://localhost:9090/dashboard
-- **Health Check**: http://localhost:9090/health
-- **APIs Mock**:
-  - Policy API: http://localhost:3001
-  - State API: http://localhost:3002
-  - Schema Registry: http://localhost:3003
-- **LocalStack Console**: http://localhost:4566
-
-## 🧪 Desenvolvimento
-
-### Scripts Disponíveis
-
-```bash
-npm start              # Inicia o sistema completo
-npm test               # Executa testes
-npm run dev            # Modo desenvolvimento com hot-reload
-npm run lint           # Verifica código
-npm run format         # Formata código
-npm run build          # Build para produção
-```
-
-### Testes
-
-```bash
-# Todos os testes
-npm test
-
-# Testes específicos
-npm test -- --grep "State Management"
-
-# Testes com coverage
-npm run test:coverage
-```
-
-## 📊 Fase Atual: Fase 1 - Infraestrutura Base
-
-### ✅ Concluído
-- [x] Estrutura base do projeto
-- [x] Docker Compose com LocalStack
-- [x] Configuração de SQS queues e DLQs
-- [x] APIs Mock para desenvolvimento
-- [x] Sistema de observabilidade básico
-- [x] Servidor de métricas HTTP
-- [x] Documentação inicial
-
-### 🔄 Próximos Passos (Fase 2)
-- [ ] Implementação do State Management Agent
-- [ ] Event Processing Agent
-- [ ] Policy Management Agent
-- [ ] Testes de integração
-- [ ] CI/CD pipeline
-
-## 📚 Documentação
-
-- [Plano de Implementação Sequencial](docs/PLANO_SEQUENCIAL_IMPLEMENTACAO.md)
-- [Arquitetura Detalhada](docs/ARQUITETURA.md)
-- [Guia de Desenvolvimento](docs/DESENVOLVIMENTO.md)
-- [APIs e Contratos](docs/APIS.md)
 
 ## 🤝 Contribuição
 
 1. Fork o projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`)
-3. Commit suas mudanças (`git commit -am 'Adiciona nova feature'`)
-4. Push para a branch (`git push origin feature/nova-feature`)
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
 5. Abra um Pull Request
 
 ## 📄 Licença
 
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para detalhes.
 
+## 🆘 Suporte
+
+Para suporte, abra uma issue no GitHub ou entre em contato com a equipe de desenvolvimento.
+
 ---
 
-**Status do Projeto**: 🟡 Em Desenvolvimento Ativo (Fase 1)
-**Última Atualização**: $(date)
-**Versão**: 1.0.0-alpha
+**Desenvolvido com ❤️ pela equipe de Agentes Autônomos**

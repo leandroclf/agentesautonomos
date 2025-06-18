@@ -13,10 +13,13 @@
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
+const compression = require('compression');
 const rateLimit = require('express-rate-limit');
-const config = require('../../../config');
-const SQSService = require('../../../services/sqs-service');
-const Logger = require('../../../utils/logger');
+const winston = require('winston');
+const promClient = require('prom-client');
+const SQSService = require('../../shared/services/sqsService');
+const ExecutionService = require('./services/executionService');
+const config = require('../config');
 
 class ExecutionAgent {
   constructor() {
