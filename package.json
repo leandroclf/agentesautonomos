@@ -1,0 +1,170 @@
+{
+  "name": "agentes-autonomos-multiagent-sqs",
+  "version": "1.0.0",
+  "description": "Arquitetura Multiagente baseada em Amazon SQS com Event-Driven Architecture (EDA) + MARL",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js start",
+    "stop": "node src/index.js stop",
+    "restart": "node src/index.js restart",
+    "status": "node src/index.js status",
+    "list": "node src/index.js list",
+    "start:event": "node src/index.js start event",
+    "start:planning": "node src/index.js start planning",
+    "start:execution": "node src/index.js start execution",
+    "start:monitoring": "node src/index.js start monitoring",
+    "start:security": "node src/index.js start security",
+    "start:policy": "node src/index.js start policy",
+    "start:core": "node src/index.js start event planning execution",
+    "start:auxiliary": "node src/index.js start monitoring security policy",
+    "dev": "NODE_ENV=development npm start",
+    "dev:event": "NODE_ENV=development node src/agents/core/event-agent/index.js",
+    "dev:planning": "NODE_ENV=development node src/agents/core/planning-agent/index.js",
+    "dev:execution": "NODE_ENV=development node src/agents/core/execution-agent/index.js",
+    "dev:monitoring": "NODE_ENV=development node src/agents/auxiliary/monitoring-agent/index.js",
+    "dev:security": "NODE_ENV=development node src/agents/auxiliary/security-agent/index.js",
+    "dev:policy": "NODE_ENV=development node src/agents/auxiliary/policy-agent/index.js",
+    "test": "NODE_ENV=test jest",
+    "test:watch": "NODE_ENV=test jest --watch",
+    "test:coverage": "NODE_ENV=test jest --coverage",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "format": "prettier --write src/",
+    "validate": "npm run lint && npm run test",
+    "build": "npm run lint && npm run test",
+    "docker:build": "docker build -t agentes-autonomos .",
+    "docker:run": "docker run -p 3000-3010:3000-3010 agentes-autonomos",
+    "k8s:deploy": "kubectl apply -f k8s/",
+    "aws:create-queues": "node scripts/aws-setup.js",
+    "mocks:start": "node scripts/start-mocks.js",
+    "mocks:policy": "node src/mocks/policy-api-mock.js",
+    "mocks:state": "node src/mocks/state-api-mock.js",
+    "mocks:schema": "node src/mocks/schema-registry-mock.js",
+    "logs": "tail -f logs/*.log",
+    "logs:event": "tail -f logs/event-agent.log",
+    "logs:planning": "tail -f logs/planning-agent.log",
+    "logs:execution": "tail -f logs/execution-agent.log",
+    "logs:monitoring": "tail -f logs/monitoring-agent.log",
+    "logs:security": "tail -f logs/security-agent.log",
+    "logs:policy": "tail -f logs/policy-agent.log",
+    "setup": "npm install && npm run setup:env",
+    "setup:env": "cp .env.example .env",
+    "setup:local": "node scripts/setup-local-environment.js",
+    "env:start": "node scripts/local-env-manager.js start",
+    "env:stop": "node scripts/local-env-manager.js stop",
+    "env:restart": "node scripts/local-env-manager.js restart",
+    "env:status": "node scripts/local-env-manager.js status",
+    "env:logs": "node scripts/local-env-manager.js logs",
+    "env:clean": "node scripts/local-env-manager.js clean",
+    "env:reset": "node scripts/local-env-manager.js reset",
+    "env:backup": "node scripts/local-env-manager.js backup",
+    "health": "curl -f http://localhost:3003/health && curl -f http://localhost:3004/health && curl -f http://localhost:3005/health",
+    "metrics": "curl -s http://localhost:3006/metrics | head -20",
+    "clean": "rm -rf node_modules logs/*.log",
+    "reset": "npm run clean && npm install"
+  },
+  "keywords": [
+    "multiagent",
+    "sqs",
+    "event-driven",
+    "marl",
+    "microservices",
+    "aws",
+    "kubernetes"
+  ],
+  "author": "Equipe de Arquitetura",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5",
+    "compression": "^1.7.4",
+    "aws-sdk": "^2.1490.0",
+    "@aws-sdk/client-sqs": "^3.450.0",
+    "winston": "^3.11.0",
+    "winston-daily-rotate-file": "^4.7.1",
+    "dotenv": "^16.3.1",
+    "uuid": "^9.0.1",
+    "bcrypt": "^5.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "joi": "^17.11.0",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.4",
+    "node-cron": "^3.0.3",
+    "prom-client": "^15.0.0",
+    "express-prometheus-middleware": "^1.2.0",
+    "morgan": "^1.10.0",
+    "axios": "^1.6.0",
+    "swagger-ui-express": "^5.0.0",
+    "swagger-jsdoc": "^6.2.8"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "eslint": "^8.54.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.1.1",
+    "prettier": "^3.1.0",
+    "nodemon": "^3.0.1",
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "@types/jest": "^29.5.8"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seu-usuario/agentes-autonomos.git"
+  },
+  "bugs": {
+    "url": "https://github.com/seu-usuario/agentes-autonomos/issues"
+  },
+  "homepage": "https://github.com/seu-usuario/agentes-autonomos#readme",
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/index.js",
+      "!src/config/*.js"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.js",
+      "**/?(*.)+(spec|test).js"
+    ],
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/setup.js"
+    ]
+  },
+  "eslintConfig": {
+    "extends": [
+      "standard"
+    ],
+    "env": {
+      "node": true,
+      "jest": true
+    },
+    "rules": {
+      "no-console": "warn",
+      "prefer-const": "error",
+      "no-unused-vars": "error"
+    }
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": true,
+    "tabWidth": 2,
+    "trailingComma": "none",
+    "printWidth": 100
+  }
+}
