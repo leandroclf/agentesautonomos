@@ -203,6 +203,19 @@ class SQSService {
     return `${this.config.queuePrefix}-${environment}-${queueName}`;
   }
 
+  async getQueueUrl(queueName) {
+    if (!this.isInitialized) {
+      throw new Error('SQS Service not initialized');
+    }
+    
+    const queueUrl = this.queues.get(queueName);
+    if (!queueUrl) {
+      throw new Error(`Queue not found: ${queueName}`);
+    }
+    
+    return queueUrl;
+  }
+
   async sendMessage(queueName, messageBody, options = {}) {
     if (!this.isInitialized) {
       throw new Error('SQS Service not initialized');

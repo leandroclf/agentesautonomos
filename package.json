@@ -5,13 +5,20 @@
   "main": "src/index.js",
   "scripts": {
     "test": "jest",
-    "test:watch": "jest --watch",
+    "test:unit": "jest --testPathPattern=unit",
+    "test:system": "jest --testPathPattern=system",
     "test:coverage": "jest --coverage",
-    "test:system": "node scripts/test-system.js",
+    "dev:setup": "node scripts/dev-setup.js",
     "start": "node scripts/start-all.js",
-    "start:dev": "node scripts/dev-setup.js",
+    "start:all": "concurrently \"npm run start:state\" \"npm run start:interface\" \"npm run start:event\" \"npm run start:planning\" \"npm run start:execution\"",
+    "start:state": "node src/agents/core/state-management-agent/start.js",
+    "start:interface": "node src/agents/core/interface-agent/index.js",
+    "start:event": "node src/agents/core/event-agent/index.js",
+    "start:planning": "node src/agents/core/planning-agent/index.js",
+    "start:execution": "node src/agents/core/execution-agent/index.js",
     "monitor": "node scripts/monitor.js",
-    "monitor:continuous": "node scripts/monitor.js --continuous",
+    "aws:setup": "node scripts/aws-setup.js",
+    "aws:verify": "node scripts/aws-verify.js",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
@@ -19,10 +26,7 @@
     "lint": "eslint src/ --ext .js",
     "lint:fix": "eslint src/ --ext .js --fix",
     "format": "prettier --write src/**/*.js",
-    "dev": "npm run start:dev && npm run start",
-    "health": "node scripts/monitor.js --output json",
-    "logs": "tail -f logs/*.log",
-    "clean": "rm -rf logs/* temp/* node_modules/.cache"
+    "clean": "rimraf logs/* temp/* coverage/"
   },
   "keywords": [
     "multiagent",
@@ -58,7 +62,8 @@
     "morgan": "^1.10.0",
     "axios": "^1.6.0",
     "swagger-ui-express": "^5.0.0",
-    "swagger-jsdoc": "^6.2.8"
+    "swagger-jsdoc": "^6.2.8",
+    "concurrently": "^8.2.2"
   },
   "devDependencies": {
     "jest": "^29.7.0",

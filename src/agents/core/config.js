@@ -4,6 +4,37 @@
  */
 
 const config = {
+  // Configurações do State Agent
+  state: {
+    port: process.env.STATE_PORT || 3000,
+    rateLimiting: {
+      windowMs: 60 * 1000, // 1 minute
+      max: 200 // limit each IP to 200 requests per minute
+    },
+    cors: {
+      origin: process.env.CORS_ORIGIN || '*',
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id', 'x-agent-id']
+    },
+    validation: {
+      maxPayloadSize: '5mb',
+      enableSchemaValidation: true
+    },
+    queues: {
+      stateChanges: 'state-changes-queue',
+      agentEvents: 'agent-events-queue',
+      systemEvents: 'system-events-queue',
+      dlq: 'state-management-dlq'
+    },
+    storage: {
+      maxVersionsPerAgent: 100,
+      defaultTTL: 24 * 60 * 60 * 1000, // 24 hours
+      cleanupInterval: 60 * 60 * 1000, // 1 hour
+      enablePersistence: process.env.ENABLE_STATE_PERSISTENCE === 'true'
+    }
+  },
+
   // Configurações do Interface Agent
   interface: {
     port: process.env.INTERFACE_AGENT_PORT || 3001,
