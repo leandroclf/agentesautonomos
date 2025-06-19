@@ -232,6 +232,13 @@ class DesireManager {
   }
 
   /**
+   * Obter todos os desejos
+   */
+  getAllDesires() {
+    return Array.from(this.desires.values());
+  }
+
+  /**
    * Obter desejos priorizados
    */
   getPrioritizedDesires(limit = null) {
@@ -389,6 +396,11 @@ class DesireManager {
     
     try {
       for (const belief of beliefs) {
+        // Verificar se a crença tem as propriedades necessárias
+        if (!belief || !belief.predicate || belief.confidence === undefined) {
+          continue;
+        }
+        
         // Gerar desejos de exploração para crenças incertas
         if (belief.confidence < 0.7) {
           const explorationDesire = {
@@ -406,7 +418,7 @@ class DesireManager {
         }
         
         // Gerar desejos de otimização para recursos
-        if (belief.predicate.includes('resource') && belief.value < 0.5) {
+        if (belief.predicate && belief.predicate.includes('resource') && belief.value < 0.5) {
           const optimizationDesire = {
             type: this.desireTypes.OPTIMIZATION,
             goal: `Optimize resource: ${belief.predicate}`,

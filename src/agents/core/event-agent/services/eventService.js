@@ -21,33 +21,33 @@ class EventService extends EventEmitter {
     // Configurações
     this.config = {
       polling: {
-        enabled: config.event.polling?.enabled ?? true,
-        interval: config.event.polling?.interval ?? 5000,
-        batchSize: config.event.polling?.batchSize ?? 10,
-        visibilityTimeout: config.event.polling?.visibilityTimeout ?? 300
+        enabled: true,
+        interval: 5000,
+        batchSize: 10,
+        visibilityTimeout: 300
       },
       processing: {
-        maxConcurrent: config.event.processing?.maxConcurrent ?? 50,
-        timeout: config.event.processing?.timeout ?? 30000,
-        retryAttempts: config.event.processing?.retryAttempts ?? 3,
-        retryDelay: config.event.processing?.retryDelay ?? 1000
+        maxConcurrent: 50,
+        timeout: config.agents.event.eventTimeout || 30000,
+        retryAttempts: config.agents.event.retryAttempts || 3,
+        retryDelay: config.agents.event.retryDelay || 1000
       },
       validation: {
-        maxEventSize: config.event.validation?.maxEventSize ?? 1048576, // 1MB
-        requiredFields: config.event.validation?.requiredFields ?? ['id', 'type', 'data'],
-        allowedTypes: config.event.validation?.allowedTypes ?? [
+        maxEventSize: 1048576, // 1MB
+        requiredFields: ['id', 'type', 'data'],
+        allowedTypes: [
           'user_action', 'system_event', 'data_update', 'notification',
           'workflow_trigger', 'integration_event', 'monitoring_alert'
         ]
       },
       coordination: {
-        planningAgentUrl: config.event.coordination?.planningAgentUrl ?? 'http://localhost:3003',
-        executionAgentUrl: config.event.coordination?.executionAgentUrl ?? 'http://localhost:3004',
-        timeout: config.event.coordination?.timeout ?? 10000
+        planningAgentUrl: 'http://localhost:3004',
+        executionAgentUrl: 'http://localhost:3005',
+        timeout: 10000
       },
       cleanup: {
-        historyRetention: config.event.cleanup?.historyRetention ?? 86400000, // 24 hours
-        cleanupInterval: config.event.cleanup?.cleanupInterval ?? 3600000 // 1 hour
+        historyRetention: 86400000, // 24 hours
+        cleanupInterval: 3600000 // 1 hour
       }
     };
     

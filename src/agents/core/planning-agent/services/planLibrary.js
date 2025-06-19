@@ -857,14 +857,19 @@ class PlanLibrary {
       }
     ];
     
-    for (const planData of basicPlans) {
-      this.createPlan(planData).catch(error => {
-        this.logger.error('Error creating basic plan', {
-          error: error.message,
-          plan: planData.name
-        });
-      });
-    }
+    // Criar planos básicos de forma assíncrona
+    setTimeout(async () => {
+      for (const planData of basicPlans) {
+        try {
+          await this.createPlan(planData);
+        } catch (error) {
+          this.logger.error('Error creating basic plan', {
+            error: error.message,
+            plan: planData.name
+          });
+        }
+      }
+    }, 100);
   }
 
   /**

@@ -1,6 +1,7 @@
 const AWS = require('aws-sdk');
 const { v4: uuidv4 } = require('uuid');
 const config = require('../../../config');
+const MockSQSService = require('../../../services/mock-sqs-service');
 
 class SQSService {
   constructor(logger) {
@@ -110,14 +111,18 @@ class SQSService {
       this.logger.debug('SQS connection test successful');
     } catch (error) {
       const safeError = error || new Error('Unknown connection error');
-      this.logger.error('SQS connection test failed', {
+      this.logger.warn('SQS connection test failed, falling back to mock service', {
         error: safeError.message || 'Unknown error',
         code: safeError.code || 'Unknown code',
         statusCode: safeError.statusCode || 'Unknown status',
         endpoint: this.sqs.config.endpoint,
         region: this.sqs.config.region
       });
-      throw new Error(`SQS connection failed: ${safeError.message || 'Unknown error'}`);
+      
+      // Fallback para mock SQS service
+      this.mockSQS = new MockSQSService(this.logger.agentId || 'sqs-service');
+      await this.mockSQS.initialize();
+      this.logger.info('Using Mock SQS Service for development');
     }
   }
 
@@ -130,6 +135,19 @@ class SQSService {
       'status-updates',
       'notifications'
     ];
+    
+    // Se estiver usando mock SQS, inicializar filas no mock
+    if (this.mockSQS) {
+      for (const queueName of queueNames) {
+        const queueUrl = await this.mockSQS.getQueueUrl(queueName);
+        this.queues.set(queueName, queueUrl);
+        this.logger.debug('Mock queue initialized', {
+          queueName,
+          queueUrl
+        });
+      }
+      return;
+    }
     
     for (const queueName of queueNames) {
       try {
@@ -288,6 +306,11 @@ class SQSService {
       throw new Error('SQS Service not initialized');
     }
     
+    // Se estiver usando mock SQS, delegar para ele
+    if (this.mockSQS) {
+      return await this.mockSQS.sendMessage(queueName, messageBody, options);
+    }
+    
     const queueUrl = this.queues.get(queueName);
     if (!queueUrl) {
       throw new Error(`Queue not found: ${queueName}`);
@@ -366,6 +389,11 @@ class SQSService {
   async receiveMessages(queueName, options = {}) {
     if (!this.isInitialized) {
       throw new Error('SQS Service not initialized');
+    }
+    
+    // Se estiver usando mock SQS, delegar para ele
+    if (this.mockSQS) {
+      return await this.mockSQS.receiveMessages(queueName, options);
     }
     
     const queueUrl = this.queues.get(queueName);

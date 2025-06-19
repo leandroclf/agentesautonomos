@@ -858,12 +858,57 @@ class IntentionManager {
   }
 
   /**
+   * Adicionar uma intenção
+   */
+  async addIntention(intention) {
+    try {
+      // Adicionar intenção
+      this.intentions.set(intention.id, intention);
+      
+      // Se a intenção está ativa, adicionar ao conjunto de ativas
+      if (intention.state === this.intentionStates.ACTIVE) {
+        this.activeIntentions.add(intention.id);
+      }
+      
+      // Adicionar ao histórico
+      this.addToHistory('added', intention);
+      
+      // Atualizar estatísticas
+      this.stats.totalIntentions = this.intentions.size;
+      this.stats.lastUpdate = new Date().toISOString();
+      
+      this.logger.info('Intention added', {
+        intentionId: intention.id,
+        state: intention.state,
+        priority: intention.priority
+      });
+      
+      return intention;
+      
+    } catch (error) {
+      this.logger.error('Error adding intention', {
+        error: error.message,
+        intentionId: intention.id
+      });
+      throw error;
+    }
+  }
+
+  /**
    * Obter intenções ativas
    */
   getActiveIntentions() {
     return Array.from(this.activeIntentions)
       .map(id => this.intentions.get(id))
       .filter(intention => intention);
+  }
+
+  /**
+   * Obter intenções com planos
+   */
+  getIntentionsWithPlans() {
+    return Array.from(this.intentions.values())
+      .filter(intention => intention.plan && intention.plan.steps && intention.plan.steps.length > 0);
   }
 
   /**

@@ -46,15 +46,17 @@ class BeliefManager {
   /**
    * Adicionar uma nova crença
    */
-  async addBelief(beliefData) {
+  async addBelief(beliefData, skipConflictResolution = false) {
     try {
       const belief = this.createBelief(beliefData);
       
-      // Verificar conflitos
-      const conflicts = await this.detectConflicts(belief);
-      
-      if (conflicts.length > 0) {
-        await this.resolveConflicts(belief, conflicts);
+      // Verificar conflitos apenas se não estivermos pulando a resolução
+      if (!skipConflictResolution) {
+        const conflicts = await this.detectConflicts(belief);
+        
+        if (conflicts.length > 0) {
+          await this.resolveConflicts(belief, conflicts);
+        }
       }
       
       // Adicionar crença
@@ -141,7 +143,7 @@ class BeliefManager {
   /**
    * Remover uma crença
    */
-  async removeBelief(beliefId) {
+  async removeBelief(beliefId, skipConflictCheck = false) {
     try {
       const belief = this.beliefs.get(beliefId);
       
@@ -298,18 +300,28 @@ class BeliefManager {
    */
   async resolveConflicts(newBelief, conflicts) {
     try {
+      if (!conflicts || conflicts.length === 0) {
+        return;
+      }
+      
       for (const conflictingBelief of conflicts) {
+        if (!conflictingBelief || !conflictingBelief.id) {
+          continue;
+        }
+        
         const resolution = await this.resolveConflict(newBelief, conflictingBelief);
         
-        if (resolution.action === 'replace') {
-          await this.removeBelief(conflictingBelief.id);
-        } else if (resolution.action === 'merge') {
+        if (resolution && resolution.action === 'replace') {
+          await this.removeBelief(conflictingBelief.id, true);
+        } else if (resolution && resolution.action === 'merge') {
           // Mesclar crenças
           const mergedBelief = this.mergeBeliefs(newBelief, conflictingBelief);
-          newBelief.value = mergedBelief.value;
-          newBelief.confidence = mergedBelief.confidence;
-          await this.removeBelief(conflictingBelief.id);
-        } else if (resolution.action === 'reject') {
+          if (mergedBelief) {
+            newBelief.value = mergedBelief.value;
+            newBelief.confidence = mergedBelief.confidence;
+          }
+          await this.removeBelief(conflictingBelief.id, true);
+        } else if (resolution && resolution.action === 'reject') {
           throw new Error('New belief rejected due to conflict');
         }
         
@@ -319,8 +331,8 @@ class BeliefManager {
     } catch (error) {
       this.logger.error('Error resolving conflicts', {
         error: error.message,
-        newBelief: newBelief.id,
-        conflicts: conflicts.map(c => c.id)
+        newBelief: newBelief?.id || 'unknown',
+        conflicts: conflicts?.map(c => c?.id) || []
       });
       throw error;
     }

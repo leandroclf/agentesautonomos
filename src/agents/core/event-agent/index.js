@@ -753,6 +753,9 @@ class EventAgent {
     try {
       this.logger.info('Starting Event Agent...');
       
+      // Inicializar EventService
+      this.eventService = new EventService(this.logger, this.sqsService, this.metrics);
+      
       // Inicializar SQS
       await this.initializeSQS();
       
@@ -809,7 +812,7 @@ class EventAgent {
         this.logger.debug('Health check', {
           status: 'healthy',
           metrics: this.metrics,
-          processingEvents: this.processingEvents.size
+          processingEvents: this.eventService ? this.eventService.processingEvents.size : 0
         });
       }
     }, config.agents.healthCheckInterval);

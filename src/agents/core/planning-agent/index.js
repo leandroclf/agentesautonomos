@@ -61,7 +61,6 @@ class PlanningAgent {
     this.setupMiddleware();
     this.setupRoutes();
     this.initializeBDI();
-    this.initializePlanTemplates();
   }
   
   /**
@@ -69,7 +68,7 @@ class PlanningAgent {
    */
   setupLogger() {
     return winston.createLogger({
-      level: config.logging.level || 'info',
+      level: config.shared.logging.level || 'info',
       format: winston.format.combine(
         winston.format.timestamp(),
         winston.format.errors({ stack: true }),
@@ -120,14 +119,22 @@ class PlanningAgent {
     try {
       this.logger.info('Initializing BDI architecture...');
       
-      // Initialize basic beliefs
+      // Initialize BDI Engine with managers
+      await this.bdiEngine.initialize(
+        this.beliefManager,
+        this.desireManager,
+        this.intentionManager,
+        this.planLibrary
+      );
+      
+      // Initialize basic beliefs (skip conflict resolution during initialization)
       await this.beliefManager.addBelief({
         content: 'system_status',
         value: 'operational',
         confidence: 1.0,
         source: 'system',
         type: 'status'
-      });
+      }, true);
       
       await this.beliefManager.addBelief({
         content: 'agent_role',
@@ -135,7 +142,7 @@ class PlanningAgent {
         confidence: 1.0,
         source: 'system',
         type: 'identity'
-      });
+      }, true);
       
       // Initialize basic desires
       await this.desireManager.addDesire({
@@ -638,6 +645,7 @@ class PlanningAgent {
         {
           id: 'validate_input',
           name: 'Validar entrada',
+          action: 'validate',
           type: 'validation',
           agent: 'execution-agent',
           dependencies: [],
@@ -646,6 +654,7 @@ class PlanningAgent {
         {
           id: 'process_request',
           name: 'Processar requisição',
+          action: 'process',
           type: 'processing',
           agent: 'execution-agent',
           dependencies: ['validate_input'],
@@ -654,6 +663,7 @@ class PlanningAgent {
         {
           id: 'return_response',
           name: 'Retornar resposta',
+          action: 'return',
           type: 'response',
           agent: 'execution-agent',
           dependencies: ['process_request'],
@@ -671,6 +681,7 @@ class PlanningAgent {
         {
           id: 'analyze_requirements',
           name: 'Analisar requisitos',
+          action: 'analyze',
           type: 'analysis',
           agent: 'execution-agent',
           dependencies: [],
@@ -679,6 +690,7 @@ class PlanningAgent {
         {
           id: 'validate_security',
           name: 'Validar segurança',
+          action: 'validate',
           type: 'security',
           agent: 'security-agent',
           dependencies: ['analyze_requirements'],
@@ -687,6 +699,7 @@ class PlanningAgent {
         {
           id: 'check_policies',
           name: 'Verificar políticas',
+          action: 'check',
           type: 'policy',
           agent: 'policy-agent',
           dependencies: ['analyze_requirements'],
@@ -695,6 +708,7 @@ class PlanningAgent {
         {
           id: 'execute_main_task',
           name: 'Executar tarefa principal',
+          action: 'execute',
           type: 'execution',
           agent: 'execution-agent',
           dependencies: ['validate_security', 'check_policies'],
@@ -703,6 +717,7 @@ class PlanningAgent {
         {
           id: 'validate_results',
           name: 'Validar resultados',
+          action: 'validate',
           type: 'validation',
           agent: 'execution-agent',
           dependencies: ['execute_main_task'],
@@ -711,6 +726,7 @@ class PlanningAgent {
         {
           id: 'generate_response',
           name: 'Gerar resposta',
+          action: 'generate',
           type: 'response',
           agent: 'execution-agent',
           dependencies: ['validate_results'],
@@ -728,6 +744,7 @@ class PlanningAgent {
         {
           id: 'validate_data_access',
           name: 'Validar acesso aos dados',
+          action: 'validate',
           type: 'security',
           agent: 'security-agent',
           dependencies: [],
@@ -736,6 +753,7 @@ class PlanningAgent {
         {
           id: 'prepare_data_query',
           name: 'Preparar consulta de dados',
+          action: 'prepare',
           type: 'preparation',
           agent: 'execution-agent',
           dependencies: ['validate_data_access'],
@@ -744,6 +762,7 @@ class PlanningAgent {
         {
           id: 'execute_data_operation',
           name: 'Executar operação de dados',
+          action: 'execute',
           type: 'data',
           agent: 'execution-agent',
           dependencies: ['prepare_data_query'],
@@ -752,6 +771,7 @@ class PlanningAgent {
         {
           id: 'validate_data_integrity',
           name: 'Validar integridade dos dados',
+          action: 'validate',
           type: 'validation',
           agent: 'execution-agent',
           dependencies: ['execute_data_operation'],
@@ -760,6 +780,7 @@ class PlanningAgent {
         {
           id: 'format_data_response',
           name: 'Formatar resposta de dados',
+          action: 'format',
           type: 'formatting',
           agent: 'execution-agent',
           dependencies: ['validate_data_integrity'],
@@ -774,6 +795,7 @@ class PlanningAgent {
         name: template.name,
         description: template.description,
         type: 'template',
+        goal: template.goal || template.name.toLowerCase().replace(/\s+/g, '_'),
         steps: template.steps,
         complexity: template.complexity
       });
@@ -1589,6 +1611,9 @@ class PlanningAgent {
       // Inicializar SQS
       await this.initializeSQS();
       
+      // Inicializar templates de planos
+      await this.initializePlanTemplates();
+      
       // Iniciar servidor HTTP
       const port = config.agents.planning.port || 3003;
       this.server = this.app.listen(port, () => {
@@ -1615,8 +1640,7 @@ class PlanningAgent {
       
       // Parar polling SQS
       if (this.sqsService) {
-        await this.sqsService.stopPolling();
-        await this.sqsService.close();
+        await this.sqsService.shutdown();
       }
       
       // Fechar servidor HTTP

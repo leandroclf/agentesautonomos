@@ -90,6 +90,13 @@ class BDIEngine {
   }
 
   /**
+   * Executar um ciclo completo do BDI (alias para compatibilidade)
+   */
+  async executeCycle() {
+    return await this.executeBDICycle();
+  }
+
+  /**
    * Executar um ciclo completo do BDI
    */
   async executeBDICycle() {
@@ -155,10 +162,10 @@ class BDIEngine {
       const beliefs = await this.beliefManager.getAllBeliefs();
       
       // Gerar desejos baseado nas crenças
-      const newDesires = await this.desireManager.generateDesires(beliefs);
+      const newDesires = await this.desireManager.generateDesires(beliefs, [], {});
       
       // Limitar número de desejos
-      if (newDesires.length > this.config.maxDesires) {
+      if (newDesires && newDesires.length > this.config.maxDesires) {
         const prioritizedDesires = await this.desireManager.prioritizeDesires(newDesires);
         newDesires.splice(this.config.maxDesires);
       }
