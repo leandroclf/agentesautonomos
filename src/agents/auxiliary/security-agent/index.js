@@ -19,6 +19,7 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const config = require('../../../config');
 const SQSService = require('../../../services/sqs-service');
+const MockSQSService = require('../../../services/mock-sqs-service');
 const Logger = require('../../../utils/logger');
 
 class SecurityAgent {
@@ -26,7 +27,10 @@ class SecurityAgent {
     this.agentId = 'security-agent';
     this.logger = new Logger(this.agentId);
     this.app = express();
-    this.sqsService = null;
+    // Use MockSQSService in development, real SQSService in production
+    this.sqsService = process.env.NODE_ENV === 'development' 
+      ? new MockSQSService(this.logger)
+      : null;
     this.isRunning = false;
     this.server = null;
     
@@ -902,7 +906,10 @@ class SecurityAgent {
    */
   async initializeSQS() {
     try {
-      this.sqsService = new SQSService();
+      // Use existing sqsService if already configured (MockSQSService in development)
+      if (!this.sqsService) {
+        this.sqsService = new SQSService();
+      }
       await this.sqsService.initialize();
       
       // Começar a escutar mensagens
@@ -1082,7 +1089,7 @@ class SecurityAgent {
       }, 300000); // 5 minutos
       
       // Iniciar servidor HTTP
-      const port = config.agents.security.port || 3006;
+      const port = process.env.PORT || config.agents.security.port || 3007;
       this.server = this.app.listen(port, () => {
         this.isRunning = true;
         this.logger.info(`Security Agent started on port ${port}`);

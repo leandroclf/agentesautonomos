@@ -109,16 +109,16 @@ class StateManagementAgent {
     this.app.use(helmet());
     
     // CORS
-    this.app.use(cors(config.state.cors));
+    this.app.use(cors(config.agents.state.cors));
     
     // Rate limiting
-    this.app.use(rateLimit(config.state.rateLimiting));
+    this.app.use(rateLimit(config.agents.state.rateLimiting));
     
     // Compressão
     this.app.use(compression());
     
     // Parse JSON
-    this.app.use(express.json({ limit: config.state.validation.maxPayloadSize }));
+    this.app.use(express.json({ limit: config.agents.state.maxStateSize || '1mb' }));
     
     // Logging de requests
     this.app.use((req, res, next) => {
@@ -276,7 +276,7 @@ class StateManagementAgent {
       await this.sqsNotifier.initialize();
       
       // Iniciar servidor HTTP
-      const port = config.state.port;
+      const port = config.agents.state.port;
       this.server = this.app.listen(port, () => {
         this.logger.info(`State Management Agent started on port ${port}`, {
           agent: this.agentId,

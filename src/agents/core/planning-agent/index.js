@@ -18,6 +18,7 @@ const rateLimit = require('express-rate-limit');
 const winston = require('winston');
 const promClient = require('prom-client');
 const SQSService = require('../../shared/services/sqsService');
+const MockSQSService = require('../../../services/mock-sqs-service');
 const PlanningService = require('./services/planningService');
 const BDIEngine = require('./services/bdiEngine');
 const BeliefManager = require('./services/beliefManager');
@@ -31,7 +32,10 @@ class PlanningAgent {
     this.agentId = 'planning-agent';
     this.logger = this.setupLogger();
     this.app = express();
-    this.sqsService = new SQSService(this.logger);
+    // Use MockSQSService in development, real SQSService in production
+    this.sqsService = process.env.NODE_ENV === 'development' 
+      ? new MockSQSService(this.logger)
+      : new SQSService(this.logger);
     this.isRunning = false;
     this.server = null;
     

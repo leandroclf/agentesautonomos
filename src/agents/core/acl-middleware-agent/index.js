@@ -115,17 +115,13 @@ class ACLMiddlewareAgent {
 
   setupMiddleware() {
     this.app.use(helmet());
-    this.app.use(cors());
+    this.app.use(cors(config.agents.acl.cors));
     this.app.use(compression());
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true }));
     
     // Rate limiting
-    const limiter = rateLimit({
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 1000, // limit each IP to 1000 requests per windowMs
-      message: 'Too many requests from this IP'
-    });
+    const limiter = rateLimit(config.agents.acl.rateLimiting);
     this.app.use('/api/', limiter);
     
     // Request logging
@@ -324,7 +320,7 @@ class ACLMiddlewareAgent {
 
   async startSQSConsumer() {
     try {
-      await this.sqsService.startConsumer(
+      this.sqsService.startPolling(
         this.inputQueue,
         async (message) => {
           try {
@@ -335,9 +331,8 @@ class ACLMiddlewareAgent {
           }
         },
         {
-          maxConcurrentMessages: 10,
-          visibilityTimeout: 30,
-          waitTimeSeconds: 20
+          pollInterval: 5000,
+          maxMessages: 10
         }
       );
       
@@ -357,7 +352,7 @@ class ACLMiddlewareAgent {
       
       try {
         // Stop SQS consumer
-        await this.sqsService.stopConsumer();
+        await this.sqsService.shutdown();
         
         // Close HTTP server
         if (this.server) {
@@ -389,7 +384,7 @@ class ACLMiddlewareAgent {
       await this.startSQSConsumer();
       
       // Start HTTP server
-      const port = process.env.PORT || 3010;
+      const port = config.agents.acl.port;
       this.server = this.app.listen(port, () => {
         this.logger.info(`ACL Middleware Agent started on port ${port}`);
       });

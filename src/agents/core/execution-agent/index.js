@@ -18,6 +18,7 @@ const rateLimit = require('express-rate-limit');
 const winston = require('winston');
 const promClient = require('prom-client');
 const SQSService = require('../../shared/services/sqsService');
+const MockSQSService = require('../../../services/mock-sqs-service');
 const ExecutionService = require('./services/executionService');
 const Logger = require('../../../utils/logger');
 const config = require('../../../config');
@@ -27,7 +28,10 @@ class ExecutionAgent {
     this.agentId = 'execution-agent';
     this.logger = new Logger(this.agentId);
     this.app = express();
-    this.sqsService = null;
+    // Use MockSQSService in development, real SQSService in production
+    this.sqsService = process.env.NODE_ENV === 'development' 
+      ? new MockSQSService(this.logger)
+      : null;
     this.isRunning = false;
     this.server = null;
     
@@ -1073,7 +1077,10 @@ class ExecutionAgent {
    */
   async initializeSQS() {
     try {
-      this.sqsService = new SQSService(this.logger);
+      // Use existing sqsService if already configured (MockSQSService in development)
+      if (!this.sqsService) {
+        this.sqsService = new SQSService(this.logger);
+      }
       await this.sqsService.initialize();
       
       // Começar a escutar mensagens

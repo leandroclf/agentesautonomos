@@ -152,7 +152,7 @@ const config = {
     
     // Monitoring Agent
     monitoring: {
-      port: parseInt(process.env.MONITORING_AGENT_PORT) || 3006,
+      port: parseInt(process.env.MONITORING_AGENT_PORT) || 3008,
       metricsInterval: parseInt(process.env.MONITORING_METRICS_INTERVAL) || 60000,
       alertThresholds: {
         errorRate: parseFloat(process.env.MONITORING_ERROR_RATE_THRESHOLD) || 0.05,
@@ -173,14 +173,48 @@ const config = {
       tokenCleanupInterval: parseInt(process.env.SECURITY_TOKEN_CLEANUP_INTERVAL) || 60 * 60 * 1000
     },
     
+    // ACL Middleware Agent
+    acl: {
+      port: parseInt(process.env.ACL_AGENT_PORT) || 3006,
+      cors: {
+        origin: process.env.CORS_ORIGIN || '*',
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        headers: ['Content-Type', 'Authorization', 'X-Requested-With']
+      },
+      rateLimiting: {
+        windowMs: 15 * 60 * 1000,
+        max: 1000
+      }
+    },
+    
     // Policy Agent
     policy: {
-      port: parseInt(process.env.POLICY_AGENT_PORT) || 3008,
+      port: parseInt(process.env.POLICY_AGENT_PORT) || 3009,
       cacheTimeout: parseInt(process.env.POLICY_CACHE_TIMEOUT) || 300000,
       maxViolationHistory: parseInt(process.env.POLICY_MAX_VIOLATION_HISTORY) || 1000,
       auditRetention: parseInt(process.env.POLICY_AUDIT_RETENTION) || 30 * 24 * 60 * 60 * 1000,
       enforcementModes: ['warn', 'block', 'audit'],
       severityLevels: ['low', 'medium', 'high', 'critical']
+    },
+    
+    // State Management Agent
+    state: {
+      port: parseInt(process.env.STATE_AGENT_PORT) || 3007,
+      cors: {
+        origin: process.env.CORS_ORIGIN || '*',
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
+      },
+      rateLimiting: {
+        windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900000,
+        max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+        message: 'Too many requests from this IP'
+      },
+      stateRetention: parseInt(process.env.STATE_RETENTION_PERIOD) || 7 * 24 * 60 * 60 * 1000,
+      maxStateSize: parseInt(process.env.MAX_STATE_SIZE) || 1048576,
+      compressionEnabled: process.env.STATE_COMPRESSION_ENABLED !== 'false'
     }
   },
   

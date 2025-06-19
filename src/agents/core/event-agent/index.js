@@ -18,6 +18,7 @@ const compression = require('compression');
 const winston = require('winston');
 const promClient = require('prom-client');
 const SQSService = require('../../shared/services/sqsService');
+const MockSQSService = require('../../../services/mock-sqs-service');
 const EventService = require('./services/eventService');
 const config = require('../../../config');
 
@@ -27,7 +28,10 @@ class EventAgent {
     this.logger = this.setupLogger();
     this.app = express();
     this.server = null;
-    this.sqsService = new SQSService(this.logger);
+    // Use MockSQSService in development, real SQSService in production
+    this.sqsService = process.env.NODE_ENV === 'development' 
+      ? new MockSQSService(this.logger)
+      : new SQSService(this.logger);
     this.metrics = this.setupMetrics();
     this.eventService = null;
     this.isShuttingDown = false;

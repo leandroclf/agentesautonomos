@@ -60,22 +60,22 @@ class AgentStarter {
       {
         name: 'monitoring-agent',
         path: path.join(srcRoot, 'agents', 'auxiliary', 'monitoring-agent', 'index.js'),
-        port: 3007,
-        env: { PORT: '3007', AGENT_NAME: 'monitoring-agent' },
+        port: 3008,
+        env: { PORT: '3008', AGENT_NAME: 'monitoring-agent' },
         category: 'auxiliary'
       },
       {
         name: 'policy-agent',
         path: path.join(srcRoot, 'agents', 'auxiliary', 'policy-agent', 'index.js'),
-        port: 3008,
-        env: { PORT: '3008', AGENT_NAME: 'policy-agent' },
+        port: 3009,
+        env: { PORT: '3009', AGENT_NAME: 'policy-agent' },
         category: 'auxiliary'
       },
       {
         name: 'security-agent',
         path: path.join(srcRoot, 'agents', 'auxiliary', 'security-agent', 'index.js'),
-        port: 3009,
-        env: { PORT: '3009', AGENT_NAME: 'security-agent' },
+        port: 3007,
+        env: { PORT: '3007', AGENT_NAME: 'security-agent' },
         category: 'auxiliary'
       },
       {

@@ -16,6 +16,7 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const config = require('../../../config');
 const SQSService = require('../../../services/sqs-service');
+const MockSQSService = require('../../../services/mock-sqs-service');
 const Logger = require('../../../utils/logger');
 
 class MonitoringAgent {
@@ -23,7 +24,10 @@ class MonitoringAgent {
     this.agentId = 'monitoring-agent';
     this.logger = new Logger(this.agentId);
     this.app = express();
-    this.sqsService = null;
+    // Use MockSQSService in development, real SQSService in production
+    this.sqsService = process.env.NODE_ENV === 'development' 
+      ? new MockSQSService(this.logger)
+      : null;
     this.isRunning = false;
     this.server = null;
     
@@ -658,7 +662,10 @@ class MonitoringAgent {
    */
   async initializeSQS() {
     try {
-      this.sqsService = new SQSService();
+      // Use existing sqsService if already configured (MockSQSService in development)
+      if (!this.sqsService) {
+        this.sqsService = new SQSService();
+      }
       await this.sqsService.initialize();
       
       // Começar a escutar mensagens
@@ -751,7 +758,7 @@ class MonitoringAgent {
       this.setupMetricsCollection();
       
       // Iniciar servidor HTTP
-      const port = config.agents.monitoring.port || 3005;
+      const port = process.env.PORT || config.agents.monitoring.port || 3008;
       this.server = this.app.listen(port, () => {
         this.isRunning = true;
         this.logger.info(`Monitoring Agent started on port ${port}`);
