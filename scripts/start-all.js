@@ -75,6 +75,13 @@ class AgentStarter {
         env: { PORT: '3009', AGENT_NAME: 'security-agent' },
         category: 'auxiliary'
       },
+      {
+        name: 'health-checker-agent',
+        path: path.join(__dirname, '..', 'src', 'agents', 'auxiliary', 'health-checker', 'index.js'),
+        port: 3010,
+        env: { PORT: '3010', AGENT_NAME: 'health-checker-agent' },
+        category: 'auxiliary'
+      },
       // MARL Agents
       {
         name: 'marl-agent',
