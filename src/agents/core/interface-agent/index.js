@@ -14,9 +14,10 @@ const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const compression = require('compression');
+const morgan = require('morgan');
 const winston = require('winston');
 const promClient = require('prom-client');
-const SQSService = require('../../../shared/services/sqsService');
+const SQSService = require('../../shared/services/sqsService');
 const InterfaceService = require('./services/interfaceService');
 const config = require('../config');
 
@@ -26,7 +27,7 @@ class InterfaceAgent {
     this.logger = this.setupLogger();
     this.app = express();
     this.server = null;
-    this.sqsService = new SQSService();
+    this.sqsService = new SQSService(this.logger);
     this.metrics = this.setupMetrics();
     this.interfaceService = null;
     

@@ -12,27 +12,39 @@ class AgentStarter {
     this.agents = [
       {
         name: 'interface-agent',
-        path: 'src/agents/core/interface-agent/index.js',
-        port: 3000,
-        env: { NODE_ENV: 'development', AGENT_NAME: 'interface' }
+        path: path.join(__dirname, '..', 'src', 'agents', 'core', 'interface-agent', 'index.js'),
+        port: 3001,
+        env: { PORT: '3001', AGENT_NAME: 'interface-agent' }
       },
       {
         name: 'event-agent',
-        path: 'src/agents/core/event-agent/index.js',
-        port: 3001,
-        env: { NODE_ENV: 'development', AGENT_NAME: 'event' }
+        path: path.join(__dirname, '..', 'src', 'agents', 'core', 'event-agent', 'index.js'),
+        port: 3002,
+        env: { PORT: '3002', AGENT_NAME: 'event-agent' }
       },
       {
         name: 'planning-agent',
-        path: 'src/agents/core/planning-agent/index.js',
-        port: 3002,
-        env: { NODE_ENV: 'development', AGENT_NAME: 'planning' }
+        path: path.join(__dirname, '..', 'src', 'agents', 'core', 'planning-agent', 'index.js'),
+        port: 3003,
+        env: { PORT: '3003', AGENT_NAME: 'planning-agent' }
       },
       {
         name: 'execution-agent',
-        path: 'src/agents/core/execution-agent/index.js',
-        port: 3003,
-        env: { NODE_ENV: 'development', AGENT_NAME: 'execution' }
+        path: path.join(__dirname, '..', 'src', 'agents', 'core', 'execution-agent', 'index.js'),
+        port: 3004,
+        env: { PORT: '3004', AGENT_NAME: 'execution-agent' }
+      },
+      {
+        name: 'state-management-agent',
+        path: path.join(__dirname, '..', 'src', 'agents', 'core', 'state-management-agent', 'index.js'),
+        port: 3005,
+        env: { PORT: '3005', AGENT_NAME: 'state-management-agent' }
+      },
+      {
+        name: 'acl-middleware-agent',
+        path: path.join(__dirname, '..', 'src', 'agents', 'core', 'acl-middleware-agent', 'index.js'),
+        port: 3006,
+        env: { PORT: '3006', AGENT_NAME: 'acl-middleware-agent' }
       }
     ];
     

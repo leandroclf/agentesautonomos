@@ -198,7 +198,11 @@ const config = {
       messageRetentionPeriod: 1209600, // 14 dias
       visibilityTimeout: 300, // 5 minutos
       receiveMessageWaitTime: 20, // Long polling
-      maxReceiveCount: 3 // Para DLQ
+      maxReceiveCount: 3, // Para DLQ
+      deadLetterQueue: {
+        enabled: process.env.DLQ_ENABLED === 'true',
+        maxReceiveCount: 3
+      }
     },
 
     // Configurações de segurança

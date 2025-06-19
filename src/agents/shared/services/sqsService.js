@@ -9,7 +9,10 @@ class SQSService {
     this.queues = new Map(); // queueName -> queueUrl
     this.isInitialized = false;
     
-    // Configurações
+    // Validação e configurações
+    if (!config || !config.shared || !config.shared.sqs) {
+      throw new Error('SQS configuration not found in config.shared.sqs');
+    }
     this.config = config.shared.sqs;
     this.retryConfig = {
       maxRetries: 3,
@@ -53,11 +56,13 @@ class SQSService {
       this.logger.info('SQS Service initialized successfully');
       
     } catch (error) {
+      // Validação defensiva para evitar TypeError
+      const safeError = error || new Error('Unknown error during SQS initialization');
       this.logger.error('Failed to initialize SQS Service', {
-        error: error.message,
-        stack: error.stack
+        error: safeError.message || 'Unknown error',
+        stack: safeError.stack || 'No stack trace available'
       });
-      throw error;
+      throw safeError;
     }
   }
 
@@ -66,10 +71,11 @@ class SQSService {
       await this.sqs.listQueues({ MaxResults: 1 }).promise();
       this.logger.debug('SQS connection test successful');
     } catch (error) {
+      const safeError = error || new Error('Unknown connection error');
       this.logger.error('SQS connection test failed', {
-        error: error.message
+        error: safeError.message || 'Unknown error'
       });
-      throw new Error(`SQS connection failed: ${error.message}`);
+      throw new Error(`SQS connection failed: ${safeError.message || 'Unknown error'}`);
     }
   }
 
@@ -94,11 +100,12 @@ class SQSService {
         });
         
       } catch (error) {
+        const safeError = error || new Error('Unknown queue initialization error');
         this.logger.error('Failed to initialize queue', {
           queueName,
-          error: error.message
+          error: safeError.message || 'Unknown error'
         });
-        throw error;
+        throw safeError;
       }
     }
   }
