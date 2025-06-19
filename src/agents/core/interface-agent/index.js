@@ -17,7 +17,7 @@ const compression = require('compression');
 const morgan = require('morgan');
 const winston = require('winston');
 const promClient = require('prom-client');
-const SQSService = require('../../shared/services/sqsService');
+const SQSService = require('../../../services/sqs-service');
 const InterfaceService = require('./services/interfaceService');
 const config = require('../../../config');
 

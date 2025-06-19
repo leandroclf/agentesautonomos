@@ -9,46 +9,49 @@ const fs = require('fs');
  */
 class AgentStarter {
   constructor() {
+    const projectRoot = path.resolve(__dirname, '..', '..');
+    const srcRoot = path.join(projectRoot, 'src');
+    
     this.agents = [
       // Core Agents
       {
         name: 'interface-agent',
-        path: path.join(__dirname, '..', 'src', 'agents', 'core', 'interface-agent', 'index.js'),
+        path: path.join(srcRoot, 'agents', 'core', 'interface-agent', 'index.js'),
         port: 3001,
         env: { PORT: '3001', AGENT_NAME: 'interface-agent' },
         category: 'core'
       },
       {
         name: 'event-agent',
-        path: path.join(__dirname, '..', 'src', 'agents', 'core', 'event-agent', 'index.js'),
+        path: path.join(srcRoot, 'agents', 'core', 'event-agent', 'index.js'),
         port: 3002,
         env: { PORT: '3002', AGENT_NAME: 'event-agent' },
         category: 'core'
       },
       {
         name: 'planning-agent',
-        path: path.join(__dirname, '..', 'src', 'agents', 'core', 'planning-agent', 'index.js'),
-        port: 3003,
-        env: { PORT: '3003', AGENT_NAME: 'planning-agent' },
+        path: path.join(srcRoot, 'agents', 'core', 'planning-agent', 'index.js'),
+        port: 3033,
+        env: { PORT: '3033', AGENT_NAME: 'planning-agent' },
         category: 'core'
       },
       {
         name: 'execution-agent',
-        path: path.join(__dirname, '..', 'src', 'agents', 'core', 'execution-agent', 'index.js'),
+        path: path.join(srcRoot, 'agents', 'core', 'execution-agent', 'index.js'),
         port: 3004,
         env: { PORT: '3004', AGENT_NAME: 'execution-agent' },
         category: 'core'
       },
       {
         name: 'state-management-agent',
-        path: path.join(__dirname, '..', 'src', 'agents', 'core', 'state-management-agent', 'index.js'),
+        path: path.join(srcRoot, 'agents', 'core', 'state-management-agent', 'index.js'),
         port: 3005,
         env: { PORT: '3005', AGENT_NAME: 'state-management-agent' },
         category: 'core'
       },
       {
         name: 'acl-middleware-agent',
-        path: path.join(__dirname, '..', 'src', 'agents', 'core', 'acl-middleware-agent', 'index.js'),
+        path: path.join(srcRoot, 'agents', 'core', 'acl-middleware-agent', 'index.js'),
         port: 3006,
         env: { PORT: '3006', AGENT_NAME: 'acl-middleware-agent' },
         category: 'core'
@@ -56,28 +59,28 @@ class AgentStarter {
       // Auxiliary Agents
       {
         name: 'monitoring-agent',
-        path: path.join(__dirname, '..', 'src', 'agents', 'auxiliary', 'monitoring-agent', 'index.js'),
+        path: path.join(srcRoot, 'agents', 'auxiliary', 'monitoring-agent', 'index.js'),
         port: 3007,
         env: { PORT: '3007', AGENT_NAME: 'monitoring-agent' },
         category: 'auxiliary'
       },
       {
         name: 'policy-agent',
-        path: path.join(__dirname, '..', 'src', 'agents', 'auxiliary', 'policy-agent', 'index.js'),
+        path: path.join(srcRoot, 'agents', 'auxiliary', 'policy-agent', 'index.js'),
         port: 3008,
         env: { PORT: '3008', AGENT_NAME: 'policy-agent' },
         category: 'auxiliary'
       },
       {
         name: 'security-agent',
-        path: path.join(__dirname, '..', 'src', 'agents', 'auxiliary', 'security-agent', 'index.js'),
+        path: path.join(srcRoot, 'agents', 'auxiliary', 'security-agent', 'index.js'),
         port: 3009,
         env: { PORT: '3009', AGENT_NAME: 'security-agent' },
         category: 'auxiliary'
       },
       {
         name: 'health-checker-agent',
-        path: path.join(__dirname, '..', 'src', 'agents', 'auxiliary', 'health-checker', 'index.js'),
+        path: path.join(srcRoot, 'agents', 'auxiliary', 'health-checker', 'index.js'),
         port: 3010,
         env: { PORT: '3010', AGENT_NAME: 'health-checker-agent' },
         category: 'auxiliary'
@@ -85,14 +88,14 @@ class AgentStarter {
       // MARL Agents
       {
         name: 'marl-agent',
-        path: path.join(__dirname, '..', 'src', 'agents', 'marl', 'marl-agent', 'index.js'),
+        path: path.join(srcRoot, 'agents', 'marl', 'marl-agent', 'index.js'),
         port: 3011,
         env: { PORT: '3011', AGENT_NAME: 'marl-agent' },
         category: 'marl'
       },
       {
         name: 'coordination-agent',
-        path: path.join(__dirname, '..', 'src', 'agents', 'marl', 'coordination-agent', 'index.js'),
+        path: path.join(srcRoot, 'agents', 'marl', 'coordination-agent', 'index.js'),
         port: 3012,
         env: { PORT: '3012', AGENT_NAME: 'coordination-agent' },
         category: 'marl'
@@ -100,14 +103,14 @@ class AgentStarter {
       // Mediation Agents
       {
         name: 'mediator-agent',
-        path: path.join(__dirname, '..', 'src', 'agents', 'mediation', 'mediator-agent', 'index.js'),
+        path: path.join(srcRoot, 'agents', 'mediation', 'mediator-agent', 'index.js'),
         port: 3013,
         env: { PORT: '3013', AGENT_NAME: 'mediator-agent' },
         category: 'mediation'
       },
       {
         name: 'orchestrator-agent',
-        path: path.join(__dirname, '..', 'src', 'agents', 'mediation', 'orchestrator-agent', 'index.js'),
+        path: path.join(srcRoot, 'agents', 'mediation', 'orchestrator-agent', 'index.js'),
         port: 3014,
         env: { PORT: '3014', AGENT_NAME: 'orchestrator-agent' },
         category: 'mediation'
@@ -122,11 +125,11 @@ class AgentStarter {
    * Verifica se todos os arquivos necessários existem
    */
   validateFiles() {
-    const projectRoot = path.resolve(__dirname, '..');
+    
     const missingFiles = [];
     
     for (const agent of this.agents) {
-      const agentPath = path.join(projectRoot, agent.path);
+      const agentPath = agent.path;
       if (!fs.existsSync(agentPath)) {
         missingFiles.push(agentPath);
       }
