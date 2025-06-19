@@ -15,8 +15,11 @@ async function initialize() {
   try {
     logger.info('Initializing Interface Agent...');
 
-    // Inicia o serviço SQS para escutar a fila de respostas
-    await sqsService.startListening(require('./handlers/responseHandler'));
+    // Inicializa o serviço SQS
+    await sqsService.initialize();
+    
+    // Inicia o polling SQS para escutar a fila de respostas
+    sqsService.startPolling('interface-agent-responses', require('./handlers/responseHandler'));
 
     logger.info('Interface Agent initialized successfully.');
   } catch (error) {

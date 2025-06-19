@@ -190,6 +190,28 @@ const config = {
     discountFactor: parseFloat(process.env.MARL_DISCOUNT_FACTOR) || 0.95,
     explorationRate: parseFloat(process.env.MARL_EXPLORATION_RATE) || 0.1,
     updateFrequency: parseInt(process.env.MARL_UPDATE_FREQUENCY) || 100
+  },
+
+  // Shared Configuration
+  shared: {
+    logging: {
+      level: process.env.LOG_LEVEL || 'info',
+      format: process.env.LOG_FORMAT || 'json',
+      enableConsole: process.env.LOG_ENABLE_CONSOLE !== 'false',
+      enableFile: process.env.LOG_ENABLE_FILE === 'true',
+      logDirectory: process.env.LOG_DIRECTORY || './logs',
+      maxFileSize: parseInt(process.env.LOG_MAX_FILE_SIZE) || 5242880,
+      maxFiles: parseInt(process.env.LOG_MAX_FILES) || 5
+    },
+    metrics: {
+      histogramBuckets: [0.1, 0.3, 0.5, 0.7, 1, 3, 5, 7, 10]
+    },
+    sqs: {
+      region: process.env.AWS_REGION || 'us-east-1',
+      endpoint: process.env.SQS_ENDPOINT,
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+    }
   }
 };
 
