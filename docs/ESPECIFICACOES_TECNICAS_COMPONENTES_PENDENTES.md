@@ -12,7 +12,7 @@ Este documento detalha as especificações técnicas para implementação dos co
 
 #### 📁 Estrutura de Arquivos
 ```
-src/agents/core/mediator-agent/
+src/agents/mediation/mediator-agent/
 ├── index.js                 # Entry point principal
 ├── services/
 │   ├── conflictDetector.js  # Detecção de conflitos

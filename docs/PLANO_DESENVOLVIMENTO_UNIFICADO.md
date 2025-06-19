@@ -88,6 +88,9 @@
 3. **Handlers Ausentes**: Interface Agent referencia handlers não implementados
 4. **Testes Automatizados**: Apenas 15% de cobertura
 
+### ✅ Débitos Técnicos Resolvidos
+1. **Duplicação Mediator Agent**: ✅ **RESOLVIDO** - Removida versão duplicada em `/core`, mantida versão robusta em `/mediation`
+
 ### 🟡 Importantes (Impactam Qualidade)
 1. **Documentação API**: Swagger/OpenAPI incompleto
 2. **Monitoramento Produção**: Grafana/Prometheus não integrados
