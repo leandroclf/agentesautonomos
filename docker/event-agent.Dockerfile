@@ -6,11 +6,11 @@ RUN apk add --no-cache curl
 # Definir diretório de trabalho
 WORKDIR /app
 
-# Copiar package.json e package-lock.json
-COPY package*.json ./
+# Copiar package.json
+COPY package.json ./
 
 # Instalar dependências
-RUN npm ci --only=production
+RUN npm install --legacy-peer-deps
 
 # Copiar código fonte
 COPY src/ ./src/

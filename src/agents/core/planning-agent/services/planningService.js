@@ -1,6 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const EventEmitter = require('events');
-const config = require('../../config');
+const config = require('../../../../config');
 
 class PlanningService extends EventEmitter {
   constructor(sqsService, logger, metrics) {

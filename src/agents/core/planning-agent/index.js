@@ -24,7 +24,7 @@ const BeliefManager = require('./services/beliefManager');
 const DesireManager = require('./services/desireManager');
 const IntentionManager = require('./services/intentionManager');
 const PlanLibrary = require('./services/planLibrary');
-const config = require('../config');
+const config = require('../../../config');
 
 class PlanningAgent {
   constructor() {
@@ -1269,7 +1269,7 @@ class PlanningAgent {
    */
   async initializeSQS() {
     try {
-      this.sqsService = new SQSService();
+      this.sqsService = new SQSService(this.logger);
       await this.sqsService.initialize();
       
       // Começar a escutar mensagens

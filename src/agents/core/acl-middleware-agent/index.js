@@ -22,7 +22,7 @@ const SQSService = require('../../shared/services/sqsService');
 const ACLService = require('./services/aclService');
 const MessageTransformer = require('./services/messageTransformer');
 const AuditLogger = require('./services/auditLogger');
-const config = require('../config');
+const config = require('../../../config');
 
 class ACLMiddlewareAgent {
   constructor() {
@@ -30,7 +30,7 @@ class ACLMiddlewareAgent {
     this.logger = this.setupLogger();
     this.app = express();
     this.server = null;
-    this.sqsService = new SQSService();
+    this.sqsService = new SQSService(this.logger);
     this.metrics = this.setupMetrics();
     this.aclService = new ACLService(this.logger);
     this.messageTransformer = new MessageTransformer(this.logger);

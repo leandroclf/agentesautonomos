@@ -5,7 +5,7 @@
 
 const EventHandler = require('../handlers/eventHandler');
 const WebSocketHandler = require('../handlers/websocketHandler');
-const config = require('../../config');
+const config = require('../../../../config');
 
 class InterfaceService {
   constructor(sqsService, logger, metrics) {

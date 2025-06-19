@@ -21,7 +21,7 @@ const SQSService = require('../../shared/services/sqsService');
 const StateStore = require('./src/stateStore');
 const StateApi = require('./src/stateApi');
 const SQSNotifier = require('./src/sqsNotifier');
-const config = require('../config');
+const config = require('../../../config');
 
 class StateManagementAgent {
   constructor() {
@@ -29,7 +29,7 @@ class StateManagementAgent {
     this.logger = this.setupLogger();
     this.app = express();
     this.server = null;
-    this.sqsService = new SQSService();
+    this.sqsService = new SQSService(this.logger);
     this.metrics = this.setupMetrics();
     this.stateStore = new StateStore();
     this.sqsNotifier = new SQSNotifier(this.sqsService, this.logger);

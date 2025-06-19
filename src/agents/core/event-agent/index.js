@@ -19,7 +19,7 @@ const winston = require('winston');
 const promClient = require('prom-client');
 const SQSService = require('../../../shared/services/sqsService');
 const EventService = require('./services/eventService');
-const config = require('../config');
+const config = require('../../../config');
 
 class EventAgent {
   constructor() {
@@ -27,7 +27,7 @@ class EventAgent {
     this.logger = this.setupLogger();
     this.app = express();
     this.server = null;
-    this.sqsService = new SQSService();
+    this.sqsService = new SQSService(this.logger);
     this.metrics = this.setupMetrics();
     this.eventService = null;
     this.isShuttingDown = false;
@@ -705,7 +705,7 @@ class EventAgent {
    */
   async initializeSQS() {
     try {
-      this.sqsService = new SQSService();
+      this.sqsService = new SQSService(this.logger);
       await this.sqsService.initialize();
       
       // Começar a escutar mensagens

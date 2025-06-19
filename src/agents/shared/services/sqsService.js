@@ -1,6 +1,6 @@
 const AWS = require('aws-sdk');
 const { v4: uuidv4 } = require('uuid');
-const config = require('../../core/config');
+const config = require('../../../config');
 
 class SQSService {
   constructor(logger) {
@@ -8,12 +8,25 @@ class SQSService {
     this.sqs = null;
     this.queues = new Map(); // queueName -> queueUrl
     this.isInitialized = false;
+    this.pollingIntervals = new Map(); // queueName -> intervalId
+    this.messageHandlers = new Map(); // queueName -> messageHandler
     
     // Validação e configurações
     if (!config || !config.shared || !config.shared.sqs) {
-      throw new Error('SQS configuration not found in config.shared.sqs');
+      // Fallback para configuração SQS direta
+      if (!config.shared || !config.shared.sqs) {
+        this.config = {
+          region: process.env.AWS_REGION || 'us-east-1',
+          endpoint: process.env.SQS_ENDPOINT,
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+        };
+      } else {
+        throw new Error('SQS configuration not found');
+      }
+    } else {
+      this.config = config.shared.sqs;
     }
-    this.config = config.shared.sqs;
     this.retryConfig = {
       maxRetries: 3,
       baseDelay: 1000,
@@ -35,16 +48,37 @@ class SQSService {
       this.logger.info('Initializing SQS Service');
       
       // Configurar AWS SDK
-      AWS.config.update({
-        region: this.config.region,
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-      });
+      const awsConfig = {
+        region: this.config.region
+      };
       
-      this.sqs = new AWS.SQS({
+      // Para desenvolvimento local com ElasticMQ, usar credenciais fictícias
+      if (process.env.SQS_ENDPOINT) {
+        awsConfig.accessKeyId = 'fake-access-key';
+        awsConfig.secretAccessKey = 'fake-secret-key';
+      } else {
+        awsConfig.accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+        awsConfig.secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+      }
+      
+      AWS.config.update(awsConfig);
+      
+      const sqsConfig = {
         apiVersion: '2012-11-05',
         region: this.config.region
-      });
+      };
+      
+      // Adicionar endpoint se configurado (para LocalStack/ElasticMQ)
+      // Forçar uso do ElasticMQ local se não houver endpoint configurado
+      if (process.env.SQS_ENDPOINT) {
+        sqsConfig.endpoint = process.env.SQS_ENDPOINT;
+      } else {
+        // Fallback para ElasticMQ local em desenvolvimento
+        sqsConfig.endpoint = 'http://localhost:9324';
+        this.logger.info('Using default ElasticMQ endpoint: http://localhost:9324');
+      }
+      
+      this.sqs = new AWS.SQS(sqsConfig);
       
       // Verificar conectividade
       await this.testConnection();
@@ -68,12 +102,20 @@ class SQSService {
 
   async testConnection() {
     try {
+      this.logger.debug('Testing SQS connection...', {
+        endpoint: this.sqs.config.endpoint,
+        region: this.sqs.config.region
+      });
       await this.sqs.listQueues({ MaxResults: 1 }).promise();
       this.logger.debug('SQS connection test successful');
     } catch (error) {
       const safeError = error || new Error('Unknown connection error');
       this.logger.error('SQS connection test failed', {
-        error: safeError.message || 'Unknown error'
+        error: safeError.message || 'Unknown error',
+        code: safeError.code || 'Unknown code',
+        statusCode: safeError.statusCode || 'Unknown status',
+        endpoint: this.sqs.config.endpoint,
+        region: this.sqs.config.region
       });
       throw new Error(`SQS connection failed: ${safeError.message || 'Unknown error'}`);
     }
@@ -207,7 +249,25 @@ class SQSService {
 
   getFullQueueName(queueName) {
     const environment = process.env.NODE_ENV || 'development';
-    return `${this.config.queuePrefix}-${environment}-${queueName}`;
+    
+    // Em desenvolvimento local com ElasticMQ, usar nomes simples das filas
+    if (environment === 'development') {
+      // Mapear nomes internos para nomes das filas no ElasticMQ
+      const queueMapping = {
+        'interface-to-event': 'interface-events',
+        'event-to-planning': 'planning-requests',
+        'planning-to-execution': 'execution-requests',
+        'execution-to-interface': 'status-updates',
+        'status-updates': 'status-updates',
+        'notifications': 'notifications'
+      };
+      
+      return queueMapping[queueName] || queueName;
+    }
+    
+    // Em produção, usar prefixos
+    const prefix = this.config.queuePrefix || 'agentes';
+    return `${prefix}-${environment}-${queueName}`;
   }
 
   async getQueueUrl(queueName) {
@@ -616,8 +676,68 @@ class SQSService {
     }
   }
 
+  startPolling(queueName, messageHandler, options = {}) {
+    if (this.pollingIntervals.has(queueName)) {
+      this.logger.warn(`Polling already active for queue ${queueName}`);
+      return;
+    }
+    
+    this.messageHandlers.set(queueName, messageHandler);
+    
+    const pollInterval = options.pollInterval || 5000; // 5 segundos
+    const maxMessages = options.maxMessages || 10;
+    
+    this.logger.info(`Starting polling for queue ${queueName}`);
+    
+    const poll = async () => {
+      try {
+        const messages = await this.receiveMessages(queueName, {
+          maxMessages,
+          waitTimeSeconds: 20
+        });
+        
+        for (const message of messages) {
+          try {
+            // Processar mensagem
+            await messageHandler(message);
+            
+            // Deletar mensagem após processamento bem-sucedido
+            await this.deleteMessage(queueName, message.receiptHandle);
+            
+            this.logger.debug(`Message processed and deleted: ${message.messageId}`);
+            
+          } catch (error) {
+            this.logger.error(`Error processing message ${message.messageId}:`, error);
+            // Mensagem não será deletada e retornará à fila
+          }
+        }
+        
+      } catch (error) {
+        this.logger.error(`Error during polling of ${queueName}:`, error);
+      }
+      
+      // Agendar próximo poll
+      if (this.pollingIntervals.has(queueName)) {
+        const timeoutId = setTimeout(poll, pollInterval);
+        this.pollingIntervals.set(queueName, timeoutId);
+      }
+    };
+    
+    // Iniciar primeiro poll
+    const timeoutId = setTimeout(poll, 1000);
+    this.pollingIntervals.set(queueName, timeoutId);
+  }
+
   async shutdown() {
     this.logger.info('Shutting down SQS Service');
+    
+    // Parar todos os pollings
+    for (const [queueName, intervalId] of this.pollingIntervals.entries()) {
+      clearTimeout(intervalId);
+      this.logger.debug(`Stopped polling for queue ${queueName}`);
+    }
+    this.pollingIntervals.clear();
+    this.messageHandlers.clear();
     
     // Não há recursos específicos para limpar no AWS SDK
     // Apenas marcar como não inicializado

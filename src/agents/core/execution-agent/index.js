@@ -19,7 +19,8 @@ const winston = require('winston');
 const promClient = require('prom-client');
 const SQSService = require('../../shared/services/sqsService');
 const ExecutionService = require('./services/executionService');
-const config = require('../config');
+const Logger = require('../../../utils/logger');
+const config = require('../../../config');
 
 class ExecutionAgent {
   constructor() {
@@ -1072,7 +1073,7 @@ class ExecutionAgent {
    */
   async initializeSQS() {
     try {
-      this.sqsService = new SQSService();
+      this.sqsService = new SQSService(this.logger);
       await this.sqsService.initialize();
       
       // Começar a escutar mensagens

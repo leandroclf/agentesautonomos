@@ -209,16 +209,16 @@ class BeliefManager {
   /**
    * Verificar se uma crença existe
    */
-  hasBelief(predicate, arguments = []) {
-    const beliefId = this.generateBeliefId(predicate, arguments);
+  hasBelief(predicate, args = []) {
+    const beliefId = this.generateBeliefId(predicate, args);
     return this.beliefs.has(beliefId);
   }
 
   /**
    * Consultar valor de uma crença
    */
-  queryBelief(predicate, arguments = []) {
-    const beliefId = this.generateBeliefId(predicate, arguments);
+  queryBelief(predicate, args = []) {
+    const beliefId = this.generateBeliefId(predicate, args);
     const belief = this.beliefs.get(beliefId);
     return belief ? belief.value : null;
   }
@@ -245,8 +245,8 @@ class BeliefManager {
   /**
    * Gerar ID único para uma crença
    */
-  generateBeliefId(predicate, arguments = []) {
-    const argsStr = arguments.map(arg => 
+  generateBeliefId(predicate, args = []) {
+    const argsStr = args.map(arg => 
       typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
     ).join(',');
     

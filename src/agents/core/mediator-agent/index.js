@@ -23,7 +23,7 @@ const MediationService = require('./services/mediationService');
 const ConflictResolver = require('./services/conflictResolver');
 const NegotiationEngine = require('./services/negotiationEngine');
 const ConsensusManager = require('./services/consensusManager');
-const config = require('../config');
+const config = require('../../../config');
 
 class MediatorAgent {
   constructor() {
@@ -31,7 +31,7 @@ class MediatorAgent {
     this.logger = this.setupLogger();
     this.app = express();
     this.server = null;
-    this.sqsService = new SQSService();
+    this.sqsService = new SQSService(this.logger);
     this.metrics = this.setupMetrics();
     this.isShuttingDown = false;
     

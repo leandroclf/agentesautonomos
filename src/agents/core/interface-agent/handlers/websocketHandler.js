@@ -5,7 +5,7 @@
 
 const WebSocket = require('ws');
 const { v4: uuidv4 } = require('uuid');
-const config = require('../../config');
+const config = require('../../../../config');
 
 class WebSocketHandler {
   constructor(server, logger, metrics, eventHandler) {

@@ -5,7 +5,7 @@
 
 const { v4: uuidv4 } = require('uuid');
 const Joi = require('joi');
-const config = require('../../config');
+const config = require('../../../../config');
 
 // Schema de validação para eventos
 const eventSchema = Joi.object({

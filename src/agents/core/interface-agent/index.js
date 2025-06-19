@@ -19,7 +19,34 @@ const winston = require('winston');
 const promClient = require('prom-client');
 const SQSService = require('../../shared/services/sqsService');
 const InterfaceService = require('./services/interfaceService');
-const config = require('../config');
+const config = require('../../../config');
+
+// Classe simples para HealthCheck
+class HealthCheck {
+  constructor(logger) {
+    this.logger = logger;
+    this.isRunning = false;
+    this.status = 'healthy';
+  }
+  
+  start() {
+    this.isRunning = true;
+    this.logger.info('Health check started');
+  }
+  
+  stop() {
+    this.isRunning = false;
+    this.logger.info('Health check stopped');
+  }
+  
+  getStatus() {
+    return {
+      status: this.status,
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
+    };
+  }
+}
 
 class InterfaceAgent {
   constructor() {
@@ -30,6 +57,7 @@ class InterfaceAgent {
     this.sqsService = new SQSService(this.logger);
     this.metrics = this.setupMetrics();
     this.interfaceService = null;
+    this.healthCheck = new HealthCheck(this.logger);
     
     this.setupMiddleware();
     this.setupRoutes();
