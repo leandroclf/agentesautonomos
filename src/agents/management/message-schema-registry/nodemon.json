@@ -1,0 +1,45 @@
+{
+  "watch": [
+    "."
+  ],
+  "ext": "js,json,env",
+  "ignore": [
+    "node_modules/",
+    "dist/",
+    "build/",
+    "coverage/",
+    "logs/",
+    "data/",
+    "backups/",
+    "temp/",
+    "tests/",
+    "*.test.js",
+    "*.spec.js",
+    ".git/",
+    ".nyc_output/",
+    "test-results/",
+    "monitoring/",
+    "k8s/",
+    "helm/",
+    "scripts/",
+    "docs/"
+  ],
+  "exec": "node server.js",
+  "env": {
+    "NODE_ENV": "development",
+    "DEBUG": "msr:*"
+  },
+  "restartable": "rs",
+  "colours": true,
+  "legacyWatch": false,
+  "delay": 1000,
+  "verbose": true,
+  "signal": "SIGTERM",
+  "stdout": true,
+  "runOnChangeOnly": false,
+  "events": {
+    "restart": "echo 'Message Schema Registry restarted due to file changes'",
+    "crash": "echo 'Message Schema Registry crashed - waiting for file changes before restart'",
+    "start": "echo 'Message Schema Registry started'"
+  }
+}
