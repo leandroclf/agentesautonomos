@@ -1,0 +1,155 @@
+{
+  "name": "external-event-api-gateway",
+  "version": "1.0.0",
+  "description": "Gateway de API para recebimento de eventos externos",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:integration": "jest --testPathPattern=integration",
+    "lint": "eslint . --ext .js",
+    "lint:fix": "eslint . --ext .js --fix",
+    "format": "prettier --write .",
+    "validate": "npm run lint && npm run test",
+    "docker:build": "docker build -t external-event-gateway .",
+    "docker:run": "docker run -p 3007:3007 external-event-gateway",
+    "health-check": "curl -f http://localhost:3007/health || exit 1"
+  },
+  "keywords": [
+    "api-gateway",
+    "events",
+    "microservices",
+    "sqs",
+    "express",
+    "nodejs"
+  ],
+  "author": "Agentes Autônomos Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-rate-limit": "^6.10.0",
+    "express-validator": "^7.0.1",
+    "aws-sdk": "^2.1467.0",
+    "redis": "^4.6.8",
+    "winston": "^3.10.0",
+    "winston-daily-rotate-file": "^4.7.1",
+    "joi": "^17.9.2",
+    "helmet": "^7.0.0",
+    "cors": "^2.8.5",
+    "compression": "^1.7.4",
+    "uuid": "^9.0.0",
+    "isomorphic-dompurify": "^2.11.0",
+    "prom-client": "^14.2.0",
+    "dotenv": "^16.3.1",
+    "moment": "^2.29.4",
+    "lodash": "^4.17.21",
+    "validator": "^13.11.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "rate-limiter-flexible": "^2.4.2",
+    "express-slow-down": "^1.6.0",
+    "express-brute": "^1.0.1",
+    "express-brute-redis": "^0.0.1"
+  },
+  "devDependencies": {
+    "jest": "^29.6.4",
+    "supertest": "^6.3.3",
+    "nodemon": "^3.0.1",
+    "eslint": "^8.47.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.28.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.1.1",
+    "prettier": "^3.0.2",
+    "@types/jest": "^29.5.4",
+    "jest-environment-node": "^29.6.4",
+    "nock": "^13.3.2",
+    "redis-memory-server": "^0.7.0",
+    "localstack": "^1.4.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "**/*.js",
+      "!**/node_modules/**",
+      "!**/coverage/**",
+      "!**/tests/**",
+      "!jest.config.js",
+      "!Dockerfile"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      }
+    },
+    "testMatch": [
+      "**/__tests__/**/*.js",
+      "**/tests/**/*.test.js",
+      "**/?(*.)+(spec|test).js"
+    ],
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/setup.js"
+    ],
+    "testTimeout": 30000
+  },
+  "eslintConfig": {
+    "extends": [
+      "standard"
+    ],
+    "env": {
+      "node": true,
+      "jest": true,
+      "es2021": true
+    },
+    "rules": {
+      "no-console": "warn",
+      "prefer-const": "error",
+      "no-unused-vars": "error",
+      "no-undef": "error",
+      "semi": ["error", "always"],
+      "quotes": ["error", "single"],
+      "indent": ["error", 2],
+      "comma-dangle": ["error", "never"],
+      "object-curly-spacing": ["error", "always"]
+    }
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": true,
+    "tabWidth": 2,
+    "trailingComma": "none",
+    "printWidth": 100,
+    "bracketSpacing": true,
+    "arrowParens": "avoid"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/agentesautonomos/external-event-gateway.git"
+  },
+  "bugs": {
+    "url": "https://github.com/agentesautonomos/external-event-gateway/issues"
+  },
+  "homepage": "https://github.com/agentesautonomos/external-event-gateway#readme",
+  "files": [
+    "index.js",
+    "gatewayConfig.js",
+    "services/",
+    "routes/",
+    "middleware/",
+    "README.md",
+    "package.json"
+  ],
+  "publishConfig": {
+    "access": "restricted"
+  }
+}

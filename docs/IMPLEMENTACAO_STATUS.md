@@ -323,74 +323,83 @@ O sistema de agentes autônomos está atualmente na **Fase 5 (Concluída)**, com
 - **Observabilidade Completa**: Métricas, logs e monitoramento
 - **Segurança Robusta**: ACL, auditoria e detecção de ameaças
 
-**Status Geral: 🟡 FASE 6 EM PROGRESSO - HEALTH CHECKER IMPLEMENTADO**
+**Status Geral: 🟡 FASE 6 EM PROGRESSO - MÚLTIPLOS AGENTES IMPLEMENTADOS**
 
 **Data da Última Atualização:** 2024-01-15  
 **Versão do Sistema:** 1.0.0  
-**Total de Agentes Implementados:** 14/21 (67%)
+**Total de Agentes Implementados:** 18/21 (86%)
 
-### ✅ Fase 6: Health Checker Agent (IMPLEMENTADO)
+### ✅ Fase 6: Advanced Infrastructure Agents (EM PROGRESSO)
 
-#### Agente Implementado:
+#### Agentes Implementados:
 
 1. **Health Checker Agent** ✅
-   - Porta: 3010
+   - Porta: 3015
    - Funcionalidades: Verificação proativa de saúde de todos os agentes
    - Recursos: Health checks automáticos, detecção de falhas, alertas
    - Integração: SQS, métricas, logging detalhado
+
+2. **Recovery Agent** ✅
+   - Porta: 3017
+   - Funcionalidades: Recuperação automática de falhas e restart de agentes
+   - Recursos: Rollback de operações, backup e restore de estado
+   - Status: ✅ IMPLEMENTADO
+
+3. **Event Enricher Agent** ✅
+   - Porta: 3018
+   - Funcionalidades: Enriquecimento de eventos com contexto adicional
+   - Recursos: Melhora qualidade dos dados processados
+   - Status: ✅ IMPLEMENTADO
+
+4. **External Event API Gateway** ✅
+   - Porta: 3019
+   - Funcionalidades: Gateway para integração com sistemas externos
+   - Recursos: Expande capacidades de integração
+   - Status: ✅ IMPLEMENTADO
+
+5. **Persistence Agent** ✅
+   - Porta: 3016
+   - Funcionalidades: Persistência avançada de dados e estado
+   - Recursos: Armazenamento multi-database, cache distribuído, backup automático
+   - Status: ✅ IMPLEMENTADO
+
+6. **Fallback Agent** ✅
+   - Porta: 3020
+   - Funcionalidades: Estratégias de fallback e resiliência do sistema
+   - Recursos: Circuit breaker, retry com backoff, degradação graceful, bulkhead
+   - Status: ✅ IMPLEMENTADO
 
 ## 🚀 Fase 6: Complementação do Sistema (EM PROGRESSO)
 
 ### Análise de Lacunas Identificadas
 
-Após análise detalhada do código e comparação com o plano sequencial original, foram identificadas lacunas importantes entre o sistema atual (14 agentes) e a visão completa (21 agentes + infraestrutura).
+Após análise detalhada do código e comparação com o plano sequencial original, foram identificadas lacunas importantes entre o sistema atual (17 agentes) e a visão completa (21 agentes + infraestrutura).
 
 ### Progresso Atual
 - ✅ **Health Checker Agent** - Implementado com sucesso
-- 🔄 **Próximo:** Recovery Agent
+- ✅ **Recovery Agent** - Implementado com sucesso
+- ✅ **Event Enricher Agent** - Implementado com sucesso
+- ✅ **External Event API Gateway** - Implementado com sucesso
+- ✅ **Persistence Agent** - Implementado com sucesso
+- ✅ **Fallback Agent** - Implementado com sucesso
+- 🔄 **Próximo:** Agent Lifecycle Manager
 
-### Agentes Faltantes (5 agentes)
-
-#### Prioridade Alta (Implementação Imediata):
-
-1. **Recovery Agent** ✅
-   - **Localização**: `src/agents/auxiliary/recovery/`
-   - **Função**: Recuperação automática de falhas e restart de agentes
-   - **Filas SQS**: Consome `agent-failure-events`; Produz `recovery-actions`
-   - **Justificativa**: Essencial para resiliência do sistema
-   - **Dependências**: Health Checker Agent (✅ implementado)
-   - **Status**: ✅ IMPLEMENTADO
-
-2. **Event Enricher Agent** ✅
-   - **Localização**: `src/agents/auxiliary/event-enricher/`
-   - **Função**: Enriquecimento de eventos com contexto adicional
-   - **Filas SQS**: Consome `raw-events`; Produz `enriched-events`
-   - **Justificativa**: Melhora qualidade dos dados processados
-
-3. **External Event API Gateway** ✅
-   - **Localização**: `src/agents/infrastructure/external-gateway/`
-   - **Função**: Gateway para integração com sistemas externos
-   - **Filas SQS**: Produz `incoming-events`, `raw-events`
-   - **Justificativa**: Expande capacidades de integração
+### Agentes Faltantes (4 agentes)
 
 #### Prioridade Média (Implementação Subsequente):
 
-5. **Persistence Agent** 🟢
-   - **Localização**: `src/agents/auxiliary/persistence/`
-   - **Função**: Persistência avançada de dados e estado
-   - **Filas SQS**: Consome `persistence-events`
-
-6. **Fallback Agent** 🟢
+1. **Fallback Agent** 🔄
    - **Localização**: `src/agents/auxiliary/fallback/`
    - **Função**: Ações de fallback em cenários de falha
    - **Filas SQS**: Consome `fallback-triggers`; Produz `fallback-actions`
+   - **Status**: 🔄 PRÓXIMO
 
-7. **Agent Lifecycle Manager** 🟢
+2. **Agent Lifecycle Manager** 🟢
    - **Localização**: `src/agents/auxiliary/lifecycle-manager/`
    - **Função**: Gerenciamento completo do ciclo de vida dos agentes
    - **Filas SQS**: Consome `recovery-actions`, `fallback-actions`; Produz `lifecycle-events`
 
-8. **Message Schema Registry** 🟢
+3. **Message Schema Registry** 🟢
    - **Localização**: `src/agents/infrastructure/schema-registry/`
    - **Função**: Registro e validação de schemas de mensagens
    - **Justificativa**: Governança e consistência de dados
