@@ -10,41 +10,100 @@ const fs = require('fs');
 class AgentStarter {
   constructor() {
     this.agents = [
+      // Core Agents
       {
         name: 'interface-agent',
         path: path.join(__dirname, '..', 'src', 'agents', 'core', 'interface-agent', 'index.js'),
         port: 3001,
-        env: { PORT: '3001', AGENT_NAME: 'interface-agent' }
+        env: { PORT: '3001', AGENT_NAME: 'interface-agent' },
+        category: 'core'
       },
       {
         name: 'event-agent',
         path: path.join(__dirname, '..', 'src', 'agents', 'core', 'event-agent', 'index.js'),
         port: 3002,
-        env: { PORT: '3002', AGENT_NAME: 'event-agent' }
+        env: { PORT: '3002', AGENT_NAME: 'event-agent' },
+        category: 'core'
       },
       {
         name: 'planning-agent',
         path: path.join(__dirname, '..', 'src', 'agents', 'core', 'planning-agent', 'index.js'),
         port: 3003,
-        env: { PORT: '3003', AGENT_NAME: 'planning-agent' }
+        env: { PORT: '3003', AGENT_NAME: 'planning-agent' },
+        category: 'core'
       },
       {
         name: 'execution-agent',
         path: path.join(__dirname, '..', 'src', 'agents', 'core', 'execution-agent', 'index.js'),
         port: 3004,
-        env: { PORT: '3004', AGENT_NAME: 'execution-agent' }
+        env: { PORT: '3004', AGENT_NAME: 'execution-agent' },
+        category: 'core'
       },
       {
         name: 'state-management-agent',
         path: path.join(__dirname, '..', 'src', 'agents', 'core', 'state-management-agent', 'index.js'),
         port: 3005,
-        env: { PORT: '3005', AGENT_NAME: 'state-management-agent' }
+        env: { PORT: '3005', AGENT_NAME: 'state-management-agent' },
+        category: 'core'
       },
       {
         name: 'acl-middleware-agent',
         path: path.join(__dirname, '..', 'src', 'agents', 'core', 'acl-middleware-agent', 'index.js'),
         port: 3006,
-        env: { PORT: '3006', AGENT_NAME: 'acl-middleware-agent' }
+        env: { PORT: '3006', AGENT_NAME: 'acl-middleware-agent' },
+        category: 'core'
+      },
+      // Auxiliary Agents
+      {
+        name: 'monitoring-agent',
+        path: path.join(__dirname, '..', 'src', 'agents', 'auxiliary', 'monitoring-agent', 'index.js'),
+        port: 3007,
+        env: { PORT: '3007', AGENT_NAME: 'monitoring-agent' },
+        category: 'auxiliary'
+      },
+      {
+        name: 'policy-agent',
+        path: path.join(__dirname, '..', 'src', 'agents', 'auxiliary', 'policy-agent', 'index.js'),
+        port: 3008,
+        env: { PORT: '3008', AGENT_NAME: 'policy-agent' },
+        category: 'auxiliary'
+      },
+      {
+        name: 'security-agent',
+        path: path.join(__dirname, '..', 'src', 'agents', 'auxiliary', 'security-agent', 'index.js'),
+        port: 3009,
+        env: { PORT: '3009', AGENT_NAME: 'security-agent' },
+        category: 'auxiliary'
+      },
+      // MARL Agents
+      {
+        name: 'marl-agent',
+        path: path.join(__dirname, '..', 'src', 'agents', 'marl', 'marl-agent', 'index.js'),
+        port: 3011,
+        env: { PORT: '3011', AGENT_NAME: 'marl-agent' },
+        category: 'marl'
+      },
+      {
+        name: 'coordination-agent',
+        path: path.join(__dirname, '..', 'src', 'agents', 'marl', 'coordination-agent', 'index.js'),
+        port: 3012,
+        env: { PORT: '3012', AGENT_NAME: 'coordination-agent' },
+        category: 'marl'
+      },
+      // Mediation Agents
+      {
+        name: 'mediator-agent',
+        path: path.join(__dirname, '..', 'src', 'agents', 'mediation', 'mediator-agent', 'index.js'),
+        port: 3013,
+        env: { PORT: '3013', AGENT_NAME: 'mediator-agent' },
+        category: 'mediation'
+      },
+      {
+        name: 'orchestrator-agent',
+        path: path.join(__dirname, '..', 'src', 'agents', 'mediation', 'orchestrator-agent', 'index.js'),
+        port: 3014,
+        env: { PORT: '3014', AGENT_NAME: 'orchestrator-agent' },
+        category: 'mediation'
       }
     ];
     
@@ -190,14 +249,43 @@ class AgentStarter {
     
     console.log('\n🎉 All agents started successfully!');
     console.log('\n📊 Agent Status:');
-    this.agents.forEach(agent => {
-      console.log(`   ${agent.name}: http://localhost:${agent.port}`);
+    
+    // Group agents by category
+    const coreAgents = this.agents.filter(agent => agent.category === 'core');
+    const auxiliaryAgents = this.agents.filter(agent => agent.category === 'auxiliary');
+    const marlAgents = this.agents.filter(agent => agent.category === 'marl');
+    const mediationAgents = this.agents.filter(agent => agent.category === 'mediation');
+    
+    console.log('\n   🔧 Core Agents:');
+    coreAgents.forEach(agent => {
+      console.log(`      ${agent.name}: http://localhost:${agent.port}`);
+    });
+    
+    console.log('\n   🛠️  Auxiliary Agents:');
+    auxiliaryAgents.forEach(agent => {
+      console.log(`      ${agent.name}: http://localhost:${agent.port}`);
+    });
+    
+    console.log('\n   🧠 MARL Agents:');
+    marlAgents.forEach(agent => {
+      console.log(`      ${agent.name}: http://localhost:${agent.port}`);
+    });
+    
+    console.log('\n   🎭 Mediation Agents:');
+    mediationAgents.forEach(agent => {
+      console.log(`      ${agent.name}: http://localhost:${agent.port}`);
     });
     
     console.log('\n💡 Useful endpoints:');
     console.log('   Health checks: GET /health on each agent');
     console.log('   Metrics: GET /metrics on each agent');
-    console.log('   Interface Agent: http://localhost:3000 (main entry point)');
+    console.log('   Interface Agent: http://localhost:3001 (main entry point)');
+    console.log('   Monitoring Agent: http://localhost:3007 (system monitoring)');
+    console.log('   Security Agent: http://localhost:3009 (authentication & authorization)');
+    console.log('   MARL Agent: http://localhost:3011 (multi-agent reinforcement learning)');
+    console.log('   Coordination Agent: http://localhost:3012 (agent coordination)');
+    console.log('   Mediator Agent: http://localhost:3013 (conflict mediation)');
+    console.log('   Orchestrator Agent: http://localhost:3014 (system orchestration)');
     
     console.log('\n⚠️  Press Ctrl+C to stop all agents');
   }
