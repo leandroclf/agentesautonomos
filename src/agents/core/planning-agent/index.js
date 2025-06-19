@@ -19,39 +19,222 @@ const winston = require('winston');
 const promClient = require('prom-client');
 const SQSService = require('../../shared/services/sqsService');
 const PlanningService = require('./services/planningService');
+const BDIEngine = require('./services/bdiEngine');
+const BeliefManager = require('./services/beliefManager');
+const DesireManager = require('./services/desireManager');
+const IntentionManager = require('./services/intentionManager');
+const PlanLibrary = require('./services/planLibrary');
 const config = require('../config');
 
 class PlanningAgent {
   constructor() {
     this.agentId = 'planning-agent';
-    this.logger = new Logger(this.agentId);
+    this.logger = this.setupLogger();
     this.app = express();
-    this.sqsService = null;
+    this.sqsService = new SQSService(this.logger);
     this.isRunning = false;
     this.server = null;
     
-    // Métricas
-    this.metrics = {
-      requestsAnalyzed: 0,
-      plansCreated: 0,
-      plansFailed: 0,
-      averageAnalysisTime: 0,
-      averagePlanComplexity: 0,
-      lastAnalyzedAt: null,
-      startedAt: new Date().toISOString()
-    };
+    // BDI Components
+    this.beliefManager = new BeliefManager(this.logger);
+    this.desireManager = new DesireManager(this.logger);
+    this.intentionManager = new IntentionManager(this.logger);
+    this.planLibrary = new PlanLibrary(this.logger);
+    this.bdiEngine = new BDIEngine(this.logger, {
+      beliefManager: this.beliefManager,
+      desireManager: this.desireManager,
+      intentionManager: this.intentionManager,
+      planLibrary: this.planLibrary
+    });
+    
+    // Métricas BDI
+    this.metrics = this.setupMetrics();
     
     // Cache de planos ativos
     this.activePlans = new Map();
+    this.activeIntentions = new Map();
     
-    // Templates de planos
-    this.planTemplates = new Map();
+    // BDI State
+    this.bdiCycleActive = false;
+    this.lastBDICycle = null;
     
     this.setupMiddleware();
     this.setupRoutes();
+    this.initializeBDI();
     this.initializePlanTemplates();
   }
   
+  /**
+   * Configurar logger
+   */
+  setupLogger() {
+    return winston.createLogger({
+      level: config.logging.level || 'info',
+      format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.errors({ stack: true }),
+        winston.format.json()
+      ),
+      transports: [
+        new winston.transports.Console(),
+        new winston.transports.File({ filename: 'logs/planning-agent.log' })
+      ]
+    });
+  }
+  
+  /**
+   * Configurar métricas
+   */
+  setupMetrics() {
+    const register = new promClient.Registry();
+    
+    const metrics = {
+      requestsAnalyzed: new promClient.Counter({
+        name: 'planning_requests_analyzed_total',
+        help: 'Total number of requests analyzed',
+        registers: [register]
+      }),
+      plansCreated: new promClient.Counter({
+        name: 'planning_plans_created_total',
+        help: 'Total number of plans created',
+        registers: [register]
+      }),
+      plansFailed: new promClient.Counter({
+        name: 'planning_plans_failed_total',
+        help: 'Total number of plans that failed',
+        registers: [register]
+      }),
+      averageAnalysisTime: 0,
+      averagePlanComplexity: 0,
+      lastAnalyzedAt: null,
+      register
+    };
+    
+    return metrics;
+  }
+  
+  /**
+   * Inicializar BDI
+   */
+  async initializeBDI() {
+    try {
+      this.logger.info('Initializing BDI architecture...');
+      
+      // Initialize basic beliefs
+      await this.beliefManager.addBelief({
+        content: 'system_status',
+        value: 'operational',
+        confidence: 1.0,
+        source: 'system',
+        type: 'status'
+      });
+      
+      await this.beliefManager.addBelief({
+        content: 'agent_role',
+        value: 'planning_agent',
+        confidence: 1.0,
+        source: 'system',
+        type: 'identity'
+      });
+      
+      // Initialize basic desires
+      await this.desireManager.addDesire({
+        goal: 'maintain_system_health',
+        description: 'Keep the system running optimally',
+        importance: 0.8,
+        urgency: 0.6,
+        feasibility: 0.9,
+        cost: 0.2,
+        type: 'maintenance'
+      });
+      
+      await this.desireManager.addDesire({
+        goal: 'optimize_planning_efficiency',
+        description: 'Improve planning algorithms and response time',
+        importance: 0.7,
+        urgency: 0.4,
+        feasibility: 0.8,
+        cost: 0.3,
+        type: 'optimization'
+      });
+      
+      // Start BDI cycle
+      this.startBDICycle();
+      
+      this.logger.info('BDI architecture initialized successfully');
+      
+    } catch (error) {
+      this.logger.error('Error initializing BDI architecture', {
+        error: error.message,
+        stack: error.stack
+      });
+      throw error;
+    }
+  }
+  
+  /**
+   * Iniciar ciclo BDI
+   */
+  startBDICycle() {
+    this.bdiCycleActive = true;
+    
+    const runCycle = async () => {
+      if (!this.bdiCycleActive) return;
+      
+      try {
+        await this.bdiEngine.executeCycle();
+        this.lastBDICycle = new Date().toISOString();
+      } catch (error) {
+        this.logger.error('Error in BDI cycle', { error: error.message });
+      }
+      
+      // Schedule next cycle
+      setTimeout(runCycle, config.agents.planning.bdiCycleInterval || 5000);
+    };
+    
+    runCycle();
+  }
+  
+  /**
+   * Parar ciclo BDI
+   */
+  stopBDICycle() {
+    this.bdiCycleActive = false;
+  }
+  
+  /**
+   * Calcular complexidade do plano
+   */
+  calculatePlanComplexity(plan) {
+    if (!plan || !plan.steps) return 0;
+    
+    let complexity = plan.steps.length;
+    
+    // Adicionar complexidade baseada em recursos
+    if (plan.resources) {
+      complexity += Object.keys(plan.resources).length * 0.5;
+    }
+    
+    // Adicionar complexidade baseada em restrições
+    if (plan.constraints) {
+      complexity += plan.constraints.length * 0.3;
+    }
+    
+    // Adicionar complexidade baseada no tipo
+    const typeComplexity = {
+      'sequential': 1,
+      'parallel': 1.5,
+      'conditional': 2,
+      'iterative': 2.5,
+      'reactive': 3,
+      'hierarchical': 3.5
+    };
+    
+    complexity *= typeComplexity[plan.type] || 1;
+    
+    return Math.round(complexity * 100) / 100;
+  }
+
   /**
    * Configurar middleware do Express
    */
@@ -108,7 +291,15 @@ class PlanningAgent {
         uptime: process.uptime(),
         memory: process.memoryUsage(),
         sqsConnected: this.sqsService?.isConnected() || false,
-        activePlans: this.activePlans.size
+        activePlans: this.activePlans.size,
+        bdi: {
+          cycleActive: this.bdiCycleActive,
+          lastCycle: this.lastBDICycle,
+          beliefs: this.beliefManager.getStats().totalBeliefs,
+          desires: this.desireManager.getStats().totalDesires,
+          intentions: this.intentionManager.getStats().totalIntentions,
+          plans: this.planLibrary.getStats().totalPlans
+        }
       };
       
       res.status(this.isRunning ? 200 : 503).json(health);
@@ -120,21 +311,188 @@ class PlanningAgent {
         agent: this.agentId,
         metrics: this.metrics,
         activePlans: this.activePlans.size,
-        planTemplates: this.planTemplates.size,
         timestamp: new Date().toISOString()
       });
     });
     
-    // Endpoint para análise direta
+    // Endpoint para criação de plano (legacy compatibility)
+    this.app.post('/plan', async (req, res) => {
+      const startTime = Date.now();
+      
+      try {
+        const { goal, constraints, resources, context } = req.body;
+        
+        if (!goal) {
+          return res.status(400).json({ error: 'Goal is required' });
+        }
+        
+        // Create desire from goal
+        const desire = await this.desireManager.addDesire({
+          goal,
+          description: `External goal: ${goal}`,
+          importance: 0.8,
+          urgency: 0.7,
+          feasibility: 0.8,
+          cost: 0.3,
+          type: 'external',
+          constraints,
+          resources,
+          context
+        });
+        
+        // Trigger BDI cycle to process the desire
+        const result = await this.bdiEngine.executeCycle();
+        
+        if (result.newIntentions && result.newIntentions.length > 0) {
+          const intention = result.newIntentions[0];
+          const complexity = this.calculatePlanComplexity(intention.plan);
+          
+          res.json({
+            success: true,
+            plan: intention.plan,
+            intention: intention,
+            metadata: {
+              complexity,
+              creationTime: Date.now() - startTime,
+              timestamp: new Date().toISOString()
+            }
+          });
+        } else {
+          res.status(400).json({
+            success: false,
+            error: 'Failed to create plan from goal'
+          });
+        }
+        
+      } catch (error) {
+        this.logger.error('Error creating plan', {
+          error: error.message,
+          request: req.body
+        });
+        
+        res.status(500).json({
+          success: false,
+          error: error.message
+        });
+      }
+    });
+    
+    // BDI Status endpoint
+    this.app.get('/bdi/status', (req, res) => {
+      try {
+        res.json({
+          success: true,
+          bdi: {
+            cycleActive: this.bdiCycleActive,
+            lastCycle: this.lastBDICycle,
+            beliefs: this.beliefManager.getStats(),
+            desires: this.desireManager.getStats(),
+            intentions: this.intentionManager.getStats(),
+            plans: this.planLibrary.getStats(),
+            engine: this.bdiEngine.getStats()
+          },
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        this.logger.error('Error getting BDI status', { error: error.message });
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
+    
+    // Beliefs endpoints
+    this.app.get('/beliefs', (req, res) => {
+      try {
+        const beliefs = this.beliefManager.getAllBeliefs();
+        res.json({ success: true, beliefs, count: beliefs.length });
+      } catch (error) {
+        this.logger.error('Error getting beliefs', { error: error.message });
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
+
+    this.app.post('/beliefs', async (req, res) => {
+      try {
+        const belief = await this.beliefManager.addBelief(req.body);
+        res.json({ success: true, belief });
+      } catch (error) {
+        this.logger.error('Error adding belief', { error: error.message });
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
+
+    // Desires endpoints
+    this.app.get('/desires', (req, res) => {
+      try {
+        const desires = this.desireManager.getAllDesires();
+        res.json({ success: true, desires, count: desires.length });
+      } catch (error) {
+        this.logger.error('Error getting desires', { error: error.message });
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
+
+    this.app.post('/desires', async (req, res) => {
+      try {
+        const desire = await this.desireManager.addDesire(req.body);
+        res.json({ success: true, desire });
+      } catch (error) {
+        this.logger.error('Error adding desire', { error: error.message });
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
+
+    // Intentions endpoints
+    this.app.get('/intentions', (req, res) => {
+      try {
+        const intentions = this.intentionManager.getAllIntentions();
+        res.json({ success: true, intentions, count: intentions.length });
+      } catch (error) {
+        this.logger.error('Error getting intentions', { error: error.message });
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
+
+    this.app.get('/intentions/active', (req, res) => {
+      try {
+        const activeIntentions = this.intentionManager.getActiveIntentions();
+        res.json({ success: true, intentions: activeIntentions, count: activeIntentions.length });
+      } catch (error) {
+        this.logger.error('Error getting active intentions', { error: error.message });
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
+
+    // BDI Cycle control
+    this.app.post('/bdi/cycle', async (req, res) => {
+      try {
+        const result = await this.bdiEngine.executeCycle();
+        res.json({ success: true, result });
+      } catch (error) {
+        this.logger.error('Error executing BDI cycle', { error: error.message });
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
+    
+    // Endpoint para análise direta (legacy compatibility)
     this.app.post('/analyze', async (req, res) => {
       try {
         const request = req.body;
-        const result = await this.analyzeRequest(request);
+        
+        // Convert to belief and trigger BDI cycle
+        await this.beliefManager.addBelief({
+          content: 'analysis_request',
+          value: request,
+          confidence: 0.8,
+          source: 'external',
+          type: 'request'
+        });
+        
+        // Trigger BDI cycle
+        const result = await this.bdiEngine.executeCycle();
         
         res.json({
           success: true,
-          planId: result.planId,
-          plan: result.plan,
+          result: result,
           timestamp: new Date().toISOString()
         });
       } catch (error) {
@@ -147,30 +505,62 @@ class PlanningAgent {
       }
     });
     
+    // Plans endpoints (BDI integration)
+    this.app.get('/plans', (req, res) => {
+      try {
+        const plans = this.planLibrary.getAllPlans();
+        res.json({ success: true, plans, count: plans.length });
+      } catch (error) {
+        this.logger.error('Error getting plans', { error: error.message });
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
+
+    this.app.post('/plans', async (req, res) => {
+      try {
+        const plan = await this.planLibrary.createPlan(req.body);
+        res.json({ success: true, plan });
+      } catch (error) {
+        this.logger.error('Error creating plan', { error: error.message });
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
+    
     // Status de plano específico
     this.app.get('/plans/:planId', (req, res) => {
       const { planId } = req.params;
-      const plan = this.activePlans.get(planId);
       
-      if (!plan) {
-        return res.status(404).json({
-          error: 'Plan not found',
-          planId
+      // Check active plans first
+      const activePlan = this.activePlans.get(planId);
+      if (activePlan) {
+        return res.json({
+          planId,
+          plan: activePlan.plan,
+          status: activePlan.status,
+          createdAt: activePlan.createdAt,
+          updatedAt: activePlan.updatedAt,
+          progress: activePlan.progress
         });
       }
       
-      res.json({
-        planId,
-        plan: plan.plan,
-        status: plan.status,
-        createdAt: plan.createdAt,
-        updatedAt: plan.updatedAt,
-        progress: plan.progress
-      });
+      // Check plan library
+      try {
+        const plans = this.planLibrary.getAllPlans();
+        const plan = plans.find(p => p.id === planId);
+        
+        if (plan) {
+          res.json({ success: true, plan });
+        } else {
+          res.status(404).json({ success: false, error: 'Plan not found' });
+        }
+      } catch (error) {
+        this.logger.error('Error getting plan', { error: error.message });
+        res.status(500).json({ success: false, error: error.message });
+      }
     });
     
     // Listar planos ativos
-    this.app.get('/plans', (req, res) => {
+    this.app.get('/plans/active', (req, res) => {
       const plans = Array.from(this.activePlans.entries()).map(([planId, planData]) => ({
         planId,
         status: planData.status,
@@ -188,18 +578,25 @@ class PlanningAgent {
     
     // Templates de planos
     this.app.get('/templates', (req, res) => {
-      const templates = Array.from(this.planTemplates.entries()).map(([name, template]) => ({
-        name,
-        description: template.description,
-        complexity: template.complexity,
-        stepsCount: template.steps.length
-      }));
-      
-      res.json({
-        templates,
-        total: templates.length,
-        timestamp: new Date().toISOString()
-      });
+      try {
+        const plans = this.planLibrary.getAllPlans();
+        const templates = plans.map(plan => ({
+          id: plan.id,
+          name: plan.name,
+          description: plan.description,
+          complexity: plan.complexity,
+          stepsCount: plan.steps ? plan.steps.length : 0
+        }));
+        
+        res.json({
+          templates,
+          total: templates.length,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        this.logger.error('Error getting templates', { error: error.message });
+        res.status(500).json({ success: false, error: error.message });
+      }
     });
     
     // 404 handler
@@ -230,7 +627,8 @@ class PlanningAgent {
   /**
    * Inicializar templates de planos
    */
-  initializePlanTemplates() {
+  async initializePlanTemplates() {
+    this.planTemplates = new Map();
     // Template para requisições simples
     this.planTemplates.set('simple_request', {
       name: 'simple_request',
@@ -369,6 +767,17 @@ class PlanningAgent {
         }
       ]
     });
+    
+    // Add templates to plan library
+    for (const [name, template] of this.planTemplates.entries()) {
+      await this.planLibrary.createPlan({
+        name: template.name,
+        description: template.description,
+        type: 'template',
+        steps: template.steps,
+        complexity: template.complexity
+      });
+    }
     
     this.logger.info('Plan templates initialized', {
       templatesCount: this.planTemplates.size,
@@ -883,6 +1292,20 @@ class PlanningAgent {
     try {
       const messageData = JSON.parse(message.Body);
       
+      // Convert SQS message to belief
+      await this.beliefManager.addBelief({
+        content: 'sqs_message',
+        value: messageData,
+        confidence: 0.9,
+        source: 'sqs',
+        type: messageData.type || 'unknown',
+        context: {
+          messageId: message.MessageId,
+          timestamp: new Date().toISOString()
+        }
+      });
+      
+      // Process specific message types for legacy compatibility
       switch (messageData.type) {
         case 'analyze_request':
           await this.analyzeRequest(messageData);
@@ -890,12 +1313,24 @@ class PlanningAgent {
         case 'plan_update':
           await this.handlePlanUpdate(messageData);
           break;
+        case 'planning_request':
+          await this.handlePlanningRequest(messageData);
+          break;
+        case 'plan_execution_result':
+          await this.handlePlanExecutionResult(messageData);
+          break;
+        case 'system_event':
+          await this.handleSystemEvent(messageData);
+          break;
         default:
           this.logger.warn('Unknown message type', {
             type: messageData.type,
             messageId: message.MessageId
           });
       }
+      
+      // Trigger BDI cycle to process the new belief
+      await this.bdiEngine.executeCycle();
       
       // Deletar mensagem da fila após processamento bem-sucedido
       await this.sqsService.deleteMessage(
@@ -911,6 +1346,196 @@ class PlanningAgent {
       
       throw error;
     }
+  }
+  
+  /**
+   * Lidar com solicitação de planejamento (legacy)
+   */
+  async handlePlanningRequest(data) {
+    try {
+      this.logger.info('Handling planning request', { data });
+      
+      // Convert to desire
+      await this.desireManager.addDesire({
+        goal: data.goal || 'process_request',
+        description: `Planning request: ${data.description || 'Unknown request'}`,
+        importance: data.priority || 0.7,
+        urgency: 0.8,
+        feasibility: 0.8,
+        cost: 0.3,
+        type: 'request',
+        context: data
+      });
+      
+      // Execute BDI cycle
+      const result = await this.bdiEngine.executeCycle();
+      
+      // Enviar resultado para fila de saída
+      if (config.agents.planning.outputQueue) {
+        await this.sqsService.sendMessage(
+          config.agents.planning.outputQueue,
+          {
+            type: 'planning_result',
+            requestId: data.requestId,
+            result,
+            timestamp: new Date().toISOString()
+          }
+        );
+      }
+      
+    } catch (error) {
+      this.logger.error('Error handling planning request', {
+        error: error.message,
+        data
+      });
+      
+      // Enviar erro para DLQ
+      if (config.agents.planning.dlqQueue) {
+        await this.sqsService.sendMessage(
+          config.agents.planning.dlqQueue,
+          {
+            type: 'planning_error',
+            requestId: data.requestId,
+            error: error.message,
+            originalData: data,
+            timestamp: new Date().toISOString()
+          }
+        );
+      }
+    }
+  }
+  
+  /**
+   * Lidar com resultado de execução de plano
+   */
+  async handlePlanExecutionResult(data) {
+    try {
+      this.logger.info('Handling plan execution result', { data });
+      
+      const { planId, success, result, error } = data;
+      
+      // Update belief about plan execution
+      await this.beliefManager.addBelief({
+        content: 'plan_execution_result',
+        value: {
+          planId,
+          success,
+          result,
+          error
+        },
+        confidence: 1.0,
+        source: 'execution',
+        type: 'result'
+      });
+      
+      // Record execution in plan library
+      await this.planLibrary.recordExecution(planId, {
+        success,
+        result,
+        error,
+        executionTime: data.executionTime,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Update active plans
+      if (this.activePlans.has(planId)) {
+        const plan = this.activePlans.get(planId);
+        
+        if (success) {
+          plan.status = 'completed';
+          plan.result = result;
+        } else {
+          plan.status = 'failed';
+          plan.error = error;
+        }
+        
+        plan.updatedAt = new Date().toISOString();
+        plan.progress = 100;
+        
+        this.activePlans.set(planId, plan);
+      }
+      
+      // Trigger BDI cycle to process the result
+      await this.bdiEngine.executeCycle();
+      
+    } catch (error) {
+      this.logger.error('Error handling plan execution result', {
+        error: error.message,
+        data
+      });
+    }
+  }
+  
+  /**
+   * Lidar com evento do sistema
+   */
+  async handleSystemEvent(data) {
+    try {
+      this.logger.info('Handling system event', { data });
+      
+      // Convert system event to belief
+      await this.beliefManager.addBelief({
+        content: 'system_event',
+        value: data,
+        confidence: 0.9,
+        source: 'system',
+        type: data.eventType || 'unknown',
+        context: {
+          timestamp: new Date().toISOString(),
+          severity: data.severity || 'info'
+        }
+      });
+      
+      // Process specific event types
+      switch (data.eventType) {
+        case 'agent_status_change':
+          await this.handleAgentStatusChange(data);
+          break;
+        case 'resource_availability':
+          await this.handleResourceAvailability(data);
+          break;
+        case 'system_alert':
+          await this.handleSystemAlert(data);
+          break;
+        default:
+          this.logger.debug('Unhandled system event type', {
+            eventType: data.eventType
+          });
+      }
+      
+      // Trigger BDI cycle to process the event
+      await this.bdiEngine.executeCycle();
+      
+    } catch (error) {
+      this.logger.error('Error handling system event', {
+        error: error.message,
+        data
+      });
+    }
+  }
+  
+  /**
+   * Handle agent status change
+   */
+  async handleAgentStatusChange(data) {
+    this.logger.info('Agent status changed', data);
+    // Implementation for agent status change
+  }
+  
+  /**
+   * Handle resource availability
+   */
+  async handleResourceAvailability(data) {
+    this.logger.info('Resource availability changed', data);
+    // Implementation for resource availability
+  }
+  
+  /**
+   * Handle system alert
+   */
+  async handleSystemAlert(data) {
+    this.logger.info('System alert received', data);
+    // Implementation for system alert
   }
   
   /**
