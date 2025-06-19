@@ -371,6 +371,47 @@ class MediatorAgent {
         timestamp: new Date().toISOString()
       });
     });
+    
+    // Importar e configurar rotas da API
+    const setupMediatorRoutes = require('./routes/mediatorRoutes');
+    const mediatorRoutes = setupMediatorRoutes({
+      mediationService: this.mediationService,
+      conflictResolutionService: this.conflictResolutionService,
+      negotiationService: this.negotiationService,
+      consensusService: this.consensusService
+    }, this.logger, this.metrics);
+    
+    this.app.use('/api/v1', mediatorRoutes);
+    
+    // Rota de informações da API
+    this.app.get('/api/v1/info', (req, res) => {
+      res.json({
+        message: 'Mediator Agent API',
+        version: '1.0.0',
+        status: 'active',
+        capabilities: {
+          mediation: 'Conflict mediation and resolution coordination',
+          negotiation: 'Multi-party negotiation facilitation',
+          consensus: 'Distributed consensus algorithms',
+          conflict_resolution: 'Automated conflict detection and resolution'
+        },
+        endpoints: {
+          mediations: '/api/v1/mediations',
+          conflicts: '/api/v1/conflicts',
+          negotiations: '/api/v1/negotiations',
+          consensus: '/api/v1/consensus',
+          stats: '/api/v1/stats',
+          relationships: '/api/v1/relationships',
+          algorithms: '/api/v1/algorithms'
+        },
+        algorithms: {
+          mediation: ['resource_conflict', 'priority_conflict', 'dependency_conflict', 'communication_conflict'],
+          consensus: ['pbft', 'raft', 'paxos', 'simple_voting', 'weighted_consensus', 'gradual_consensus'],
+          negotiation: ['english_auction', 'bilateral', 'multilateral', 'argumentation_based', 'utility_based'],
+          conflict_resolution: ['resource_pooling', 'time_slicing', 'priority_inheritance', 'dependency_breaking']
+        }
+      });
+    });
   }
   
   /**
