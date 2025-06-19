@@ -17,7 +17,7 @@ const rateLimit = require('express-rate-limit');
 const compression = require('compression');
 const winston = require('winston');
 const promClient = require('prom-client');
-const SQSService = require('../../../shared/services/sqsService');
+const SQSService = require('../../../services/sqsService');
 const EventService = require('./services/eventService');
 const config = require('../../../config');
 

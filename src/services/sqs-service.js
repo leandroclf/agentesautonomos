@@ -10,7 +10,7 @@
  */
 
 const { SQSClient, SendMessageCommand, ReceiveMessageCommand, DeleteMessageCommand, GetQueueUrlCommand } = require('@aws-sdk/client-sqs');
-const config = require('../config');
+const config = require('@config');
 const Logger = require('../utils/logger');
 
 class SQSService {

@@ -175,18 +175,17 @@ class AgentStarter {
    */
   startAgent(agent) {
     return new Promise((resolve, reject) => {
-      const projectRoot = path.resolve(__dirname, '..');
-      const agentPath = path.join(projectRoot, agent.path);
+      const projectRoot = path.resolve(__dirname, '..', '..');
+      const agentPath = agent.path;
       
       console.log(`🚀 Starting ${agent.name} on port ${agent.port}...`);
       
       const env = {
         ...process.env,
-        ...agent.env,
-        PORT: agent.port.toString()
+        ...agent.env
       };
-      
-      const childProcess = spawn('node', [agentPath], {
+
+      const childProcess = spawn('node', [path.resolve(projectRoot, agentPath)], {
         env,
         cwd: projectRoot,
         stdio: ['pipe', 'pipe', 'pipe']
@@ -203,6 +202,7 @@ class AgentStarter {
       });
       
       childProcess.stderr.on('data', (data) => {
+        console.error(`[${agent.name}] ERROR: ${data.toString()}`);
         const lines = data.toString().split('\n').filter(line => line.trim());
         lines.forEach(line => {
           console.error(`[${agent.name}] ERROR: ${line}`);

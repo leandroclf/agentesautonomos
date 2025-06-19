@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Arquitetura Multiagente baseada em Amazon SQS com Event-Driven Architecture (EDA) + MARL",
   "main": "src/index.js",
+
   "scripts": {
     "test": "jest",
     "test:unit": "jest --testPathPattern=unit",
@@ -61,7 +62,7 @@
     "moment": "^2.29.4",
     "morgan": "^1.10.0",
     "node-cron": "^3.0.3",
-    "prom-client": "^14.2.0",
+    "prom-client": "^13.2.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
     "uuid": "^9.0.1",
@@ -83,10 +84,7 @@
     "prettier": "^3.1.0",
     "supertest": "^6.3.3"
   },
-  "engines": {
-    "node": ">=16.0.0",
-    "npm": ">=8.0.0"
-  },
+
   "repository": {
     "type": "git",
     "url": "git+https://github.com/seu-usuario/agentes-autonomos.git"

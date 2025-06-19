@@ -10,7 +10,7 @@
  */
 
 const winston = require('winston');
-const config = require('../config/index.js');
+const config = require('../config');
 
 class Logger {
   constructor(agentId, options = {}) {
