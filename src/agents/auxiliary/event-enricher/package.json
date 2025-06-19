@@ -1,0 +1,110 @@
+{
+  "name": "event-enricher-agent",
+  "version": "1.0.0",
+  "description": "Event Enricher Agent - Enriquece eventos com contexto adicional, validação e normalização",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "mocha tests/**/*.test.js --timeout 10000",
+    "test:watch": "mocha tests/**/*.test.js --watch --timeout 10000",
+    "test:coverage": "nyc mocha tests/**/*.test.js --timeout 10000",
+    "lint": "eslint . --ext .js",
+    "lint:fix": "eslint . --ext .js --fix",
+    "validate": "npm run lint && npm run test",
+    "docker:build": "docker build -t event-enricher-agent .",
+    "docker:run": "docker run -p 3006:3006 event-enricher-agent"
+  },
+  "keywords": [
+    "event-enricher",
+    "event-processing",
+    "validation",
+    "normalization",
+    "context",
+    "microservice",
+    "sqs",
+    "aws"
+  ],
+  "author": "Sistema de Agentes Autônomos",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "winston": "^3.10.0",
+    "prom-client": "^14.2.0",
+    "aws-sdk": "^2.1467.0",
+    "joi": "^17.9.2",
+    "dompurify": "^3.0.5",
+    "jsdom": "^22.1.0",
+    "redis": "^4.6.8",
+    "geoip-lite": "^1.4.7",
+    "useragent": "^2.3.0",
+    "helmet": "^7.0.0",
+    "cors": "^2.8.5",
+    "compression": "^1.7.4",
+    "express-rate-limit": "^6.10.0",
+    "express-validator": "^7.0.1",
+    "uuid": "^9.0.0",
+    "moment": "^2.29.4",
+    "lodash": "^4.17.21",
+    "node-cache": "^5.1.2",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "mocha": "^10.2.0",
+    "chai": "^4.3.8",
+    "sinon": "^15.2.0",
+    "supertest": "^6.3.3",
+    "nyc": "^15.1.0",
+    "nodemon": "^3.0.1",
+    "eslint": "^8.47.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.28.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.1.1"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seu-usuario/agentes-autonomos.git",
+    "directory": "src/agents/auxiliary/event-enricher"
+  },
+  "bugs": {
+    "url": "https://github.com/seu-usuario/agentes-autonomos/issues"
+  },
+  "homepage": "https://github.com/seu-usuario/agentes-autonomos#readme",
+  "nyc": {
+    "include": [
+      "**/*.js"
+    ],
+    "exclude": [
+      "tests/**",
+      "node_modules/**",
+      "coverage/**"
+    ],
+    "reporter": [
+      "text",
+      "html",
+      "lcov"
+    ],
+    "check-coverage": true,
+    "lines": 80,
+    "functions": 80,
+    "branches": 70,
+    "statements": 80
+  },
+  "eslintConfig": {
+    "extends": "standard",
+    "env": {
+      "node": true,
+      "mocha": true
+    },
+    "rules": {
+      "no-console": "warn",
+      "prefer-const": "error",
+      "no-unused-vars": "error"
+    }
+  }
+}

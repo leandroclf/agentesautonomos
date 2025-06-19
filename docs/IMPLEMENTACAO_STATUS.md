@@ -349,24 +349,25 @@ Após análise detalhada do código e comparação com o plano sequencial origin
 - ✅ **Health Checker Agent** - Implementado com sucesso
 - 🔄 **Próximo:** Recovery Agent
 
-### Agentes Faltantes (7 agentes)
+### Agentes Faltantes (5 agentes)
 
 #### Prioridade Alta (Implementação Imediata):
 
-1. **Recovery Agent** 🔴
+1. **Recovery Agent** ✅
    - **Localização**: `src/agents/auxiliary/recovery/`
    - **Função**: Recuperação automática de falhas e restart de agentes
    - **Filas SQS**: Consome `agent-failure-events`; Produz `recovery-actions`
    - **Justificativa**: Essencial para resiliência do sistema
    - **Dependências**: Health Checker Agent (✅ implementado)
+   - **Status**: ✅ IMPLEMENTADO
 
-2. **Event Enricher Agent** 🟡
+2. **Event Enricher Agent** ✅
    - **Localização**: `src/agents/auxiliary/event-enricher/`
    - **Função**: Enriquecimento de eventos com contexto adicional
    - **Filas SQS**: Consome `raw-events`; Produz `enriched-events`
    - **Justificativa**: Melhora qualidade dos dados processados
 
-3. **External Event API Gateway** 🟡
+3. **External Event API Gateway** ✅
    - **Localização**: `src/agents/infrastructure/external-gateway/`
    - **Função**: Gateway para integração com sistemas externos
    - **Filas SQS**: Produz `incoming-events`, `raw-events`
