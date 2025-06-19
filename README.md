@@ -18,6 +18,34 @@ O sistema é composto por 4 agentes principais:
 - **Prometheus**: Para coleta de métricas
 - **Grafana**: Para visualização e monitoramento
 
+## 📁 Estrutura do Projeto
+
+```
+├── src/                   # Código fonte dos agentes
+├── dev/                   # Scripts e ferramentas de desenvolvimento
+│   ├── setup.js          # Configuração do ambiente de desenvolvimento
+│   ├── local-stack.js    # Gerenciamento do LocalStack
+│   ├── mocks/            # Serviços mock para desenvolvimento
+│   └── scripts/          # Scripts auxiliares de desenvolvimento
+├── deploy/                # Scripts de deploy e produção
+│   ├── aws/              # Scripts específicos para AWS
+│   ├── production/       # Deploy para produção
+│   └── staging/          # Deploy para staging
+├── infrastructure/        # Infraestrutura como código
+│   ├── localstack/       # Configuração LocalStack (desenvolvimento)
+│   ├── aws/              # Infraestrutura AWS (Terraform, CloudFormation)
+│   ├── kubernetes/       # Manifests Kubernetes
+│   ├── docker/           # Dockerfiles e configurações
+│   └── monitoring/       # Configurações de monitoramento
+├── config/                # Configurações centralizadas
+│   ├── environments/     # Templates de ambiente (.env)
+│   ├── app-configs/      # Configurações da aplicação
+│   └── monitoring/       # Configurações de monitoramento
+├── docs/                  # Documentação do projeto
+├── tests/                 # Testes automatizados
+└── scripts/               # Scripts utilitários gerais
+```
+
 ## 🚀 Início Rápido
 
 ### Pré-requisitos
@@ -39,257 +67,130 @@ O sistema é composto por 4 agentes principais:
    npm install
    ```
 
-3. **Configure as variáveis de ambiente**
+3. **Configure o ambiente de desenvolvimento**
    ```bash
-   cp .env.example .env
-   # Edite o arquivo .env conforme necessário
+   npm run dev:setup
    ```
 
-### Execução com Docker (Recomendado)
+### Desenvolvimento Local
+
+1. **Inicie o LocalStack**
+   ```bash
+   npm run localstack:up
+   ```
+
+2. **Configure os recursos AWS locais**
+   ```bash
+   npm run localstack:setup
+   ```
+
+3. **Inicie todos os agentes**
+   ```bash
+   npm start
+   ```
+
+4. **Ou inicie individualmente**
+   ```bash
+   npm run start:interface    # Interface Agent (porta 3000)
+   npm run start:event        # Event Agent (porta 3001)
+   npm run start:planning     # Planning Agent (porta 3002)
+   npm run start:execution    # Execution Agent (porta 3003)
+   ```
+
+### Execução com Docker
 
 ```bash
-# Inicia todos os serviços
-docker-compose up -d
+# Subir todos os serviços
+npm run docker:up
 
-# Verifica o status
-docker-compose ps
+# Ver logs
+npm run docker:logs
 
-# Visualiza logs
-docker-compose logs -f
-```
-
-### Execução Local
-
-```bash
-# Inicia todos os agentes
-node scripts/start-all.js
-
-# Ou inicie individualmente
-node src/agents/core/interface-agent/index.js
-node src/agents/core/event-agent/index.js
-node src/agents/core/planning-agent/index.js
-node src/agents/core/execution-agent/index.js
-```
-
-## 📊 Monitoramento
-
-### URLs de Acesso
-
-- **Interface Agent**: http://localhost:3000
-- **Event Agent**: http://localhost:3001
-- **Planning Agent**: http://localhost:3002
-- **Execution Agent**: http://localhost:3003
-- **Prometheus**: http://localhost:9090
-- **Grafana**: http://localhost:3100 (admin/admin)
-- **SQS Local**: http://localhost:9324
-
-### Health Checks
-
-```bash
-# Verifica saúde de todos os agentes
-curl http://localhost:3000/health
-curl http://localhost:3001/health
-curl http://localhost:3002/health
-curl http://localhost:3003/health
-```
-
-### Métricas
-
-```bash
-# Métricas básicas
-curl http://localhost:3000/metrics
-
-# Métricas detalhadas
-curl http://localhost:3000/metrics/detailed
+# Parar serviços
+npm run docker:down
 ```
 
 ## 🔧 Configuração
 
-### Variáveis de Ambiente
+### Ambientes
 
-```env
-# Configuração do Agente
-NODE_ENV=development
-PORT=3000
-AGENT_NAME=interface
+O projeto suporta múltiplos ambientes com configurações específicas:
 
-# AWS/SQS
-AWS_ACCESS_KEY_ID=local
-AWS_SECRET_ACCESS_KEY=local
-AWS_REGION=us-east-1
-SQS_ENDPOINT=http://localhost:9324
+- **Desenvolvimento**: `config/environments/.env.development`
+- **Staging**: `config/environments/.env.staging`
+- **Produção**: `config/environments/.env.production`
 
-# Outros Agentes
-EVENT_AGENT_HOST=localhost
+### Variáveis de Ambiente Principais
+
+```bash
+# Ambiente
+NODE_ENV=development|staging|production
+
+# Portas dos Agentes
+INTERFACE_AGENT_PORT=3000
 EVENT_AGENT_PORT=3001
-PLANNING_AGENT_HOST=localhost
 PLANNING_AGENT_PORT=3002
-EXECUTION_AGENT_HOST=localhost
 EXECUTION_AGENT_PORT=3003
 
-# Logging
-LOG_LEVEL=info
-LOG_FORMAT=json
+# AWS/LocalStack
+AWS_REGION=us-east-1
+SQS_ENDPOINT=http://localhost:4566  # LocalStack
 
-# Métricas
-METRICS_ENABLED=true
-METRICS_PORT=9464
-```
-
-### Configuração SQS
-
-O sistema usa ElasticMQ para simular SQS localmente. As filas são configuradas automaticamente:
-
-- `interface-events`: Eventos do Interface Agent
-- `event-processing`: Processamento de eventos
-- `planning-requests`: Solicitações de planejamento
-- `execution-requests`: Solicitações de execução
-- `notifications`: Notificações do sistema
-- `status-updates`: Atualizações de status
-
-## 📝 API Reference
-
-### Interface Agent
-
-```bash
-# Criar evento
-POST /events
-{
-  "type": "user_request",
-  "data": {
-    "action": "process_data",
-    "parameters": {}
-  }
-}
-
-# Listar eventos
-GET /events
-
-# Status do evento
-GET /events/:id/status
-```
-
-### Event Agent
-
-```bash
-# Processar evento
-POST /process
-{
-  "eventId": "uuid",
-  "type": "user_request",
-  "data": {}
-}
-
-# Histórico de eventos
-GET /events/history
-```
-
-### Planning Agent
-
-```bash
-# Criar plano
-POST /plans
-{
-  "eventId": "uuid",
-  "requirements": {
-    "action": "process_data",
-    "constraints": []
-  }
-}
-
-# Listar planos
-GET /plans
-
-# Detalhes do plano
-GET /plans/:id
-```
-
-### Execution Agent
-
-```bash
-# Executar plano
-POST /execute
-{
-  "planId": "uuid",
-  "priority": "normal"
-}
-
-# Status da execução
-GET /executions/:id/status
-
-# Parar execução
-POST /executions/:id/stop
-
-# Logs da execução
-GET /executions/:id/logs
+# Filas SQS
+EVENT_QUEUE_URL=event-agent-queue
+PLANNING_QUEUE_URL=planning-agent-queue
+EXECUTION_QUEUE_URL=execution-agent-queue
 ```
 
 ## 🧪 Testes
 
 ```bash
-# Executar todos os testes
+# Todos os testes
 npm test
 
 # Testes unitários
 npm run test:unit
 
-# Testes de integração
-npm run test:integration
+# Testes de sistema
+npm run test:system
 
-# Testes end-to-end
-npm run test:e2e
-
-# Coverage
+# Cobertura
 npm run test:coverage
 ```
 
-## 🔍 Troubleshooting
+## 📊 Monitoramento
 
-### Problemas Comuns
+- **Prometheus**: http://localhost:9090
+- **Grafana**: http://localhost:3001
+- **Métricas dos Agentes**: http://localhost:9464/metrics
 
-1. **Agentes não iniciam**
-   - Verifique se as portas estão disponíveis
-   - Confirme as variáveis de ambiente
-   - Verifique os logs: `docker-compose logs <service>`
+## 🚀 Deploy
 
-2. **SQS não conecta**
-   - Verifique se o ElasticMQ está rodando
-   - Confirme o endpoint SQS nas variáveis de ambiente
-   - Teste: `curl http://localhost:9324`
-
-3. **Métricas não aparecem**
-   - Verifique se o Prometheus está coletando dados
-   - Confirme a configuração em `config/prometheus.yml`
-   - Verifique os targets no Prometheus UI
-
-### Logs
-
+### AWS
 ```bash
-# Logs de todos os serviços
-docker-compose logs -f
+# Configurar infraestrutura
+npm run aws:setup
 
-# Logs de um serviço específico
-docker-compose logs -f interface-agent
-
-# Logs locais
-tail -f logs/interface-agent.log
+# Verificar configuração
+npm run aws:verify
 ```
 
-## 📁 Estrutura do Projeto
+### Kubernetes
+```bash
+# Deploy via Helm
+helm install agentes infrastructure/kubernetes/helm-charts/agentes
 
+# Deploy via manifests
+kubectl apply -k infrastructure/kubernetes/overlays/production
 ```
-├── src/
-│   ├── agents/
-│   │   ├── core/           # Agentes principais
-│   │   └── shared/         # Serviços compartilhados
-│   ├── config/             # Configurações
-│   └── utils/              # Utilitários
-├── config/                 # Configurações externas
-├── docker/                 # Dockerfiles
-├── docs/                   # Documentação
-├── scripts/                # Scripts de automação
-└── tests/                  # Testes
-```
+
+## 📚 Documentação
+
+- [Arquitetura](docs/ARCHITECTURE.md)
+- [Desenvolvimento Local](docs/LOCAL_DEVELOPMENT.md)
+- [Deploy](docs/DEPLOYMENT.md)
+- [API](docs/API.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
 
 ## 🤝 Contribuição
 
@@ -301,12 +202,11 @@ tail -f logs/interface-agent.log
 
 ## 📄 Licença
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para detalhes.
+Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
 
 ## 🆘 Suporte
 
-Para suporte, abra uma issue no GitHub ou entre em contato com a equipe de desenvolvimento.
-
----
-
-**Desenvolvido com ❤️ pela equipe de Agentes Autônomos**
+Para suporte e dúvidas:
+- Consulte a [documentação](docs/)
+- Abra uma [issue](https://github.com/seu-usuario/agentesautonomos/issues)
+- Entre em contato com a equipe de arquitetura

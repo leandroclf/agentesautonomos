@@ -1,0 +1,102 @@
+{
+  "name": "recovery-agent",
+  "version": "1.0.0",
+  "description": "Recovery Agent - Agente responsável por recuperação automática de falhas e escalação de problemas críticos",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "health": "curl -f http://localhost:3015/health || exit 1",
+    "docker:build": "docker build -t recovery-agent .",
+    "docker:run": "docker run -p 3015:3015 recovery-agent"
+  },
+  "keywords": [
+    "recovery",
+    "agent",
+    "autonomous",
+    "microservice",
+    "resilience",
+    "escalation",
+    "restart",
+    "monitoring"
+  ],
+  "author": "Sistema de Agentes Autônomos",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.0",
+    "aws-sdk": "^2.1490.0",
+    "winston": "^3.11.0",
+    "winston-daily-rotate-file": "^4.7.1",
+    "prom-client": "^15.0.0",
+    "helmet": "^7.1.0",
+    "cors": "^2.8.5",
+    "express-rate-limit": "^7.1.5",
+    "dotenv": "^16.3.1",
+    "joi": "^17.11.0",
+    "uuid": "^9.0.1",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.7",
+    "twilio": "^4.19.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "eslint": "^8.54.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.1.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seu-usuario/agentes-autonomos.git"
+  },
+  "bugs": {
+    "url": "https://github.com/seu-usuario/agentes-autonomos/issues"
+  },
+  "homepage": "https://github.com/seu-usuario/agentes-autonomos#readme",
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "**/*.js",
+      "!**/node_modules/**",
+      "!**/coverage/**",
+      "!jest.config.js"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.js",
+      "**/?(*.)+(spec|test).js"
+    ]
+  },
+  "eslintConfig": {
+    "extends": [
+      "standard"
+    ],
+    "env": {
+      "node": true,
+      "jest": true
+    },
+    "rules": {
+      "no-console": "warn",
+      "prefer-const": "error",
+      "no-unused-vars": "error"
+    }
+  }
+}
