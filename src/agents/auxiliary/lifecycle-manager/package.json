@@ -1,0 +1,125 @@
+{
+  "name": "agent-lifecycle-manager",
+  "version": "1.0.0",
+  "description": "Gerenciador de ciclo de vida dos agentes autônomos - controla inicialização, parada, reinicialização e monitoramento de todos os agentes do sistema",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "mocha tests/**/*.test.js --timeout 10000",
+    "test:watch": "mocha tests/**/*.test.js --watch --timeout 10000",
+    "test:coverage": "nyc mocha tests/**/*.test.js --timeout 10000",
+    "lint": "eslint . --ext .js",
+    "lint:fix": "eslint . --ext .js --fix",
+    "health": "curl -f http://localhost:3021/health || exit 1",
+    "metrics": "curl -s http://localhost:3021/metrics",
+    "status": "curl -s -H \"X-API-Key: lifecycle-manager-key\" http://localhost:3021/api/status",
+    "agents:list": "curl -s -H \"X-API-Key: lifecycle-manager-key\" http://localhost:3021/api/agents",
+    "agents:start-all": "curl -s -X POST -H \"X-API-Key: lifecycle-manager-key\" http://localhost:3021/api/agents/start-all",
+    "agents:stop-all": "curl -s -X POST -H \"X-API-Key: lifecycle-manager-key\" http://localhost:3021/api/agents/stop-all",
+    "validate": "node -c index.js && echo 'Syntax OK'"
+  },
+  "keywords": [
+    "agent",
+    "lifecycle",
+    "manager",
+    "autonomous",
+    "process",
+    "monitoring",
+    "orchestration",
+    "microservices",
+    "sqs",
+    "health-check",
+    "metrics",
+    "prometheus"
+  ],
+  "author": "Sistema de Agentes Autônomos",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "helmet": "^7.1.0",
+    "cors": "^2.8.5",
+    "express-rate-limit": "^7.1.5",
+    "compression": "^1.7.4",
+    "winston": "^3.11.0",
+    "winston-daily-rotate-file": "^4.7.1",
+    "prom-client": "^15.1.0",
+    "aws-sdk": "^2.1498.0",
+    "node-cache": "^5.1.2",
+    "joi": "^17.11.0",
+    "uuid": "^9.0.1",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.4",
+    "pidusage": "^3.0.2",
+    "ps-list": "^8.1.1",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "mocha": "^10.2.0",
+    "chai": "^4.3.10",
+    "sinon": "^17.0.1",
+    "supertest": "^6.3.3",
+    "nyc": "^15.1.0",
+    "nodemon": "^3.0.2",
+    "eslint": "^8.55.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.1.1"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yukz-project/agentes-autonomos.git",
+    "directory": "src/agents/auxiliary/lifecycle-manager"
+  },
+  "bugs": {
+    "url": "https://github.com/yukz-project/agentes-autonomos/issues"
+  },
+  "homepage": "https://github.com/yukz-project/agentes-autonomos#readme",
+  "nyc": {
+    "exclude": [
+      "tests/**",
+      "node_modules/**",
+      "coverage/**"
+    ],
+    "reporter": [
+      "text",
+      "html",
+      "lcov"
+    ],
+    "check-coverage": true,
+    "lines": 80,
+    "functions": 80,
+    "branches": 70,
+    "statements": 80
+  },
+  "eslintConfig": {
+    "extends": "standard",
+    "env": {
+      "node": true,
+      "mocha": true
+    },
+    "rules": {
+      "no-console": "warn",
+      "prefer-const": "error",
+      "no-var": "error"
+    }
+  },
+  "nodemonConfig": {
+    "watch": [
+      "."
+    ],
+    "ext": "js,json",
+    "ignore": [
+      "tests/**",
+      "node_modules/**",
+      "logs/**",
+      "coverage/**"
+    ],
+    "delay": "2"
+  }
+}

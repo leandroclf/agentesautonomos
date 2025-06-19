@@ -2,49 +2,65 @@
 
 ## Visão Geral
 
-O **Agent Lifecycle Manager** é o componente central responsável pelo gerenciamento completo do ciclo de vida de todos os agentes no sistema. Este agente coordena a inicialização, monitoramento, atualizações, deployments e encerramento de todos os outros agentes, garantindo alta disponibilidade e operação confiável do sistema.
+O **Agent Lifecycle Manager** é um componente crítico do sistema de agentes autônomos responsável por gerenciar o ciclo de vida completo de todos os agentes. Ele atua como o orquestrador central que controla a inicialização, parada, reinicialização e monitoramento contínuo de todos os agentes do sistema.
 
-## Características Principais
+## Funcionalidades Principais
 
 ### 🔄 Gerenciamento de Ciclo de Vida
-- **Inicialização Controlada**: Gerencia a ordem de inicialização baseada em dependências
-- **Monitoramento Contínuo**: Monitora constantemente o status e saúde dos agentes
-- **Reinicialização Automática**: Reinicia agentes que falharam automaticamente
-- **Encerramento Gracioso**: Coordena o shutdown seguro de todos os agentes
+- **Inicialização de Agentes**: Start individual ou em lote com verificação de dependências
+- **Parada Controlada**: Stop gracioso ou forçado com timeout configurável
+- **Reinicialização Inteligente**: Restart com políticas automáticas e controle de falhas
+- **Coordenação de Dependências**: Gerenciamento da ordem de inicialização baseada em dependências
 
-### 📊 Monitoramento e Saúde
-- **Health Checks**: Executa verificações de saúde periódicas
-- **Métricas de Performance**: Coleta e expõe métricas operacionais
-- **Alertas Proativos**: Notifica sobre problemas antes que se tornem críticos
-- **Dashboard de Status**: Interface para visualização do estado do sistema
+### 📊 Monitoramento e Observabilidade
+- **Health Checks**: Verificação contínua da saúde dos agentes
+- **Métricas Prometheus**: Coleta e exposição de métricas detalhadas
+- **Event Sourcing**: Registro completo de eventos do ciclo de vida
+- **Dashboard em Tempo Real**: Status visual de todos os agentes
 
-### 🚀 Deployments e Atualizações
-- **Rolling Deployment**: Atualização gradual sem downtime
-- **Blue-Green Deployment**: Troca instantânea entre ambientes
-- **Canary Deployment**: Teste com subconjunto antes do rollout completo
-- **Rollback Automático**: Reversão automática em caso de falhas
+### 🔧 Automação e Recuperação
+- **Auto-restart**: Políticas configuráveis de reinicialização automática
+- **Detecção de Falhas**: Identificação proativa de agentes com problemas
+- **Integração com Recovery Agent**: Coordenação para ações de recuperação
+- **Fallback Actions**: Execução de ações alternativas em caso de falha
 
-### 🔗 Gerenciamento de Dependências
-- **Mapeamento de Dependências**: Mantém grafo de dependências entre agentes
-- **Inicialização Ordenada**: Respeita ordem de dependências na inicialização
-- **Verificação de Integridade**: Valida dependências antes de operações
-- **Resolução de Conflitos**: Gerencia conflitos de dependências
+### 🗂️ Registro e Configuração
+- **Agent Registry**: Catálogo centralizado de todos os agentes
+- **Configuração Dinâmica**: Atualização de configurações sem restart
+- **Validação de Configuração**: Verificação de integridade das configurações
+- **Backup e Restore**: Exportação/importação do estado do registry
 
 ## Arquitetura
 
 ### Componentes Principais
 
 ```
-Agent Lifecycle Manager
-├── Lifecycle Service      # Gerenciamento de estados dos agentes
-├── Dependency Service     # Gerenciamento de dependências
-├── Deployment Service     # Coordenação de deployments
-├── Health Service         # Monitoramento de saúde
-├── Metrics Service        # Coleta de métricas
-├── Alert Service          # Sistema de alertas
-├── Cache Service          # Cache de estados
-└── SQS Service           # Comunicação via mensagens
+├── services/
+│   ├── lifecycleService.js      # Orquestração do ciclo de vida
+│   ├── agentRegistryService.js  # Gerenciamento do registro de agentes
+│   ├── processManagerService.js # Controle de processos do sistema
+│   └── eventService.js          # Gerenciamento de eventos e SQS
+├── routes/
+│   ├── api.js                   # Endpoints da API REST
+│   ├── health.js                # Health checks
+│   └── metrics.js               # Métricas Prometheus
+├── middleware/
+│   └── index.js                 # Middlewares de segurança e validação
+├── config/
+│   └── lifecycleConfig.js       # Configurações do agente
+└── tests/
+    └── lifecycle.test.js        # Testes automatizados
 ```
+
+### Integração SQS
+
+**Filas Consumidas:**
+- `recovery-actions`: Ações de recuperação do Recovery Agent
+- `fallback-actions`: Ações de fallback em caso de falha
+
+**Filas Produzidas:**
+- `lifecycle-events`: Eventos do ciclo de vida dos agentes
+- `agent-failure-events`: Notificações de falhas de agentes
 
 ### Fluxo de Operação
 
