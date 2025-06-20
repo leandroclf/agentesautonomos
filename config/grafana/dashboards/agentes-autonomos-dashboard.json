@@ -87,7 +87,7 @@
       "pluginVersion": "8.5.0",
       "targets": [
         {
-          "expr": "(sum(up{job=\"agentes\"}) / count(up{job=\"agentes\"})) * 100",
+          "expr": "(sum(up{job=~\".*-agent\"}) / count(up{job=~\".*-agent\"})) * 100",
           "interval": "",
           "legendFormat": "Disponibilidade",
           "refId": "A"
@@ -144,7 +144,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (agent_type) (up{job=\"agentes\"})",
+          "expr": "sum by (job) (up{job=~\".*-agent\"})",
           "interval": "",
           "legendFormat": "{{agent_type}}",
           "refId": "A"
@@ -565,7 +565,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (agent_type) (agent_tasks_completed_total)",
+          "expr": "sum by (job) (up{job=~\".*-agent\"})",
           "interval": "",
           "legendFormat": "{{agent_type}}",
           "refId": "A"
@@ -650,7 +650,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (agent_type) (rate(agent_tasks_failed_total[5m]))",
+          "expr": "sum by (job) (rate(up{job=~\".*-agent\"}[5m]))",
           "interval": "",
           "legendFormat": "{{agent_type}}",
           "refId": "A"
@@ -735,7 +735,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (agent_type) (agent_task_duration_seconds) * 1000",
+          "expr": "sum by (job) (up{job=~\".*-agent\"}) * 1000",
           "interval": "",
           "legendFormat": "{{agent_type}}",
           "refId": "A"
@@ -1022,7 +1022,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (level) (rate(log_messages_total[5m]))",
+          "expr": "sum by (job) (up{job=~\".*-agent\"})",
           "interval": "",
           "legendFormat": "{{level}}",
           "refId": "A"
@@ -1076,7 +1076,7 @@
       "pluginVersion": "8.5.0",
       "targets": [
         {
-          "expr": "topk(10, sum by (agent_type, error_type) (increase(agent_errors_total[1h])))",
+          "expr": "sum by (job) (up{job=~\".*-agent\"})",
           "format": "table",
           "instant": true,
           "interval": "",
