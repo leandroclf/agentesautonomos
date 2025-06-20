@@ -27,17 +27,40 @@
    - O Grafana pode solicitar para alterar a senha padrão
    - Você pode pular esta etapa clicando em "Skip"
 
-## 📈 Dashboards Disponíveis
+## 📊 Dashboards Disponíveis
 
-### Dashboard Principal: "Agentes Autônomos"
+### Dashboard Profissional: "🤖 Agentes Autônomos - Dashboard Profissional"
+
+#### 📊 KPIs Principais
+- **🟢 Disponibilidade do Sistema**: Gauge com thresholds (95%+ verde, 80-95% amarelo, <80% vermelho)
+- **📈 Distribuição de Agentes Ativos**: Gráfico de pizza mostrando tipos de agentes ativos
+- **⚡ Taxa de Requisições**: Métrica em tempo real (req/s) com alertas visuais
+- **⏱️ Latência P95**: Monitoramento de performance com thresholds de latência
+
+#### 🔄 Performance e Throughput
+- **📊 Taxa de Requisições por Método/Status**: Análise detalhada por método HTTP e código de status
+- **⏱️ Latência por Percentil**: P50, P95 e P99 para análise completa de performance
+
+#### 🤖 Métricas dos Agentes
+- **✅ Tarefas Completadas por Agente**: Tracking de produtividade por tipo de agente
+- **❌ Taxa de Falhas por Agente**: Monitoramento de erros e falhas
+- **⏰ Tempo de Execução de Tarefas**: Análise de performance de execução
+
+#### 💻 Recursos do Sistema
+- **🖥️ Uso de CPU por Instância**: Monitoramento detalhado de recursos computacionais
+- **🧠 Uso de Memória**: Tracking de memória usada vs disponível
+
+#### 🔍 Logs e Alertas
+- **📝 Taxa de Logs por Nível**: Análise de logs por severidade (INFO, WARN, ERROR)
+- **🚨 Top 10 Erros por Agente**: Tabela dos erros mais frequentes na última hora
+
+#### 🎛️ Recursos Avançados
+- **Filtros Dinâmicos**: Seleção por tipo de agente e instância
+- **Auto-refresh**: Atualização automática a cada 5 segundos
+- **Thresholds Inteligentes**: Alertas visuais baseados em limites configuráveis
+- **Visualizações Profissionais**: Gauges, gráficos de pizza, time series e tabelas
+
 Localizado em: `/config/grafana/dashboards/agentes-autonomos-dashboard.json`
-
-**Métricas Incluídas**:
-- 📊 **Taxa de Requisições HTTP** por agente
-- 🟢 **Status dos Agentes** (Up/Down)
-- 💻 **Uso de CPU** por agente
-- 🧠 **Uso de Memória** por agente
-- 🎯 **Atividade dos Agentes** (eventos, decisões, ações)
 
 ### Como Importar Dashboards
 
