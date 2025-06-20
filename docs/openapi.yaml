@@ -1,0 +1,2460 @@
+openapi: 3.0.3
+info:
+  title: Sistema de Agentes Autônomos API
+  description: |
+    API completa do sistema de agentes autônomos baseado em arquitetura BDI (Belief-Desire-Intention) 
+    com Multi-Agent Reinforcement Learning (MARL).
+    
+    ## Características
+    
+    - **Arquitetura BDI**: Agentes com crenças, desejos e intenções
+    - **MARL**: Aprendizado por reforço multi-agente
+    - **Comunicação Assíncrona**: Via Amazon SQS
+    - **Cache Distribuído**: Redis para performance
+    - **Monitoramento**: Prometheus + Grafana
+    
+    ## Agentes Principais
+    
+    - **Interface Agent**: Interface com usuário
+    - **Event Agent**: Processamento de eventos
+    - **Planning Agent**: Planejamento de ações
+    - **Execution Agent**: Execução de ações
+    - **Mediator Agent**: Mediação entre agentes
+    - **Orchestrator Agent**: Orquestração de workflows
+    
+    ## Segurança
+    
+    Todas as rotas protegidas requerem autenticação JWT via header Authorization.
+    
+  version: 1.0.0
+  contact:
+    name: Equipe de Desenvolvimento
+    email: dev@agentesautonomos.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Ambiente de Desenvolvimento
+  - url: https://staging-api.agentesautonomos.com
+    description: Ambiente de Staging
+  - url: https://api.agentesautonomos.com
+    description: Ambiente de Produção
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Autenticação
+  /auth/login:
+    post:
+      tags:
+        - Autenticação
+      summary: Realizar login
+      description: Autentica usuário e retorna JWT token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login realizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Autenticação
+      summary: Renovar token
+      description: Renova JWT token usando refresh token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Token renovado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/logout:
+    post:
+      tags:
+        - Autenticação
+      summary: Realizar logout
+      description: Invalida o token atual
+      responses:
+        '200':
+          description: Logout realizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # Interface Agent
+  /api/interface/sessions:
+    post:
+      tags:
+        - Interface Agent
+      summary: Criar nova sessão
+      description: Cria uma nova sessão de interação com o usuário
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '201':
+          description: Sessão criada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    get:
+      tags:
+        - Interface Agent
+      summary: Listar sessões
+      description: Lista todas as sessões do usuário
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, completed]
+      responses:
+        '200':
+          description: Lista de sessões
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionListResponse'
+
+  /api/interface/sessions/{sessionId}:
+    get:
+      tags:
+        - Interface Agent
+      summary: Obter sessão
+      description: Obtém detalhes de uma sessão específica
+      parameters:
+        - $ref: '#/components/parameters/SessionIdParam'
+      responses:
+        '200':
+          description: Detalhes da sessão
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Interface Agent
+      summary: Atualizar sessão
+      description: Atualiza uma sessão existente
+      parameters:
+        - $ref: '#/components/parameters/SessionIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSessionRequest'
+      responses:
+        '200':
+          description: Sessão atualizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Interface Agent
+      summary: Excluir sessão
+      description: Exclui uma sessão
+      parameters:
+        - $ref: '#/components/parameters/SessionIdParam'
+      responses:
+        '204':
+          description: Sessão excluída com sucesso
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/interface/sessions/{sessionId}/messages:
+    post:
+      tags:
+        - Interface Agent
+      summary: Enviar mensagem
+      description: Envia uma mensagem na sessão
+      parameters:
+        - $ref: '#/components/parameters/SessionIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '201':
+          description: Mensagem enviada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    get:
+      tags:
+        - Interface Agent
+      summary: Listar mensagens
+      description: Lista mensagens da sessão
+      parameters:
+        - $ref: '#/components/parameters/SessionIdParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Lista de mensagens
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageListResponse'
+
+  # Event Agent
+  /api/events:
+    post:
+      tags:
+        - Event Agent
+      summary: Criar evento
+      description: Cria um novo evento no sistema
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEventRequest'
+      responses:
+        '201':
+          description: Evento criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    get:
+      tags:
+        - Event Agent
+      summary: Listar eventos
+      description: Lista eventos do sistema
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, processing, completed, failed]
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Lista de eventos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventListResponse'
+
+  /api/events/{eventId}:
+    get:
+      tags:
+        - Event Agent
+      summary: Obter evento
+      description: Obtém detalhes de um evento específico
+      parameters:
+        - $ref: '#/components/parameters/EventIdParam'
+      responses:
+        '200':
+          description: Detalhes do evento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Event Agent
+      summary: Atualizar evento
+      description: Atualiza um evento existente
+      parameters:
+        - $ref: '#/components/parameters/EventIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEventRequest'
+      responses:
+        '200':
+          description: Evento atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Planning Agent
+  /api/planning/plans:
+    post:
+      tags:
+        - Planning Agent
+      summary: Criar plano
+      description: Cria um novo plano de execução
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePlanRequest'
+      responses:
+        '201':
+          description: Plano criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    get:
+      tags:
+        - Planning Agent
+      summary: Listar planos
+      description: Lista planos do sistema
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, active, completed, failed, cancelled]
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+      responses:
+        '200':
+          description: Lista de planos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanListResponse'
+
+  /api/planning/plans/{planId}:
+    get:
+      tags:
+        - Planning Agent
+      summary: Obter plano
+      description: Obtém detalhes de um plano específico
+      parameters:
+        - $ref: '#/components/parameters/PlanIdParam'
+      responses:
+        '200':
+          description: Detalhes do plano
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Planning Agent
+      summary: Atualizar plano
+      description: Atualiza um plano existente
+      parameters:
+        - $ref: '#/components/parameters/PlanIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePlanRequest'
+      responses:
+        '200':
+          description: Plano atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Planning Agent
+      summary: Cancelar plano
+      description: Cancela um plano
+      parameters:
+        - $ref: '#/components/parameters/PlanIdParam'
+      responses:
+        '204':
+          description: Plano cancelado com sucesso
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/planning/plans/{planId}/execute:
+    post:
+      tags:
+        - Planning Agent
+      summary: Executar plano
+      description: Inicia a execução de um plano
+      parameters:
+        - $ref: '#/components/parameters/PlanIdParam'
+      responses:
+        '202':
+          description: Execução iniciada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Plano já em execução
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Execution Agent
+  /api/execution/tasks:
+    get:
+      tags:
+        - Execution Agent
+      summary: Listar tarefas
+      description: Lista tarefas de execução
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, running, completed, failed, cancelled]
+        - name: planId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de tarefas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListResponse'
+
+  /api/execution/tasks/{taskId}:
+    get:
+      tags:
+        - Execution Agent
+      summary: Obter tarefa
+      description: Obtém detalhes de uma tarefa específica
+      parameters:
+        - $ref: '#/components/parameters/TaskIdParam'
+      responses:
+        '200':
+          description: Detalhes da tarefa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Execution Agent
+      summary: Atualizar tarefa
+      description: Atualiza status de uma tarefa
+      parameters:
+        - $ref: '#/components/parameters/TaskIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+      responses:
+        '200':
+          description: Tarefa atualizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/execution/tasks/{taskId}/cancel:
+    post:
+      tags:
+        - Execution Agent
+      summary: Cancelar tarefa
+      description: Cancela uma tarefa em execução
+      parameters:
+        - $ref: '#/components/parameters/TaskIdParam'
+      responses:
+        '200':
+          description: Tarefa cancelada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Tarefa não pode ser cancelada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Mediator Agent
+  /api/mediation/conflicts:
+    get:
+      tags:
+        - Mediator Agent
+      summary: Listar conflitos
+      description: Lista conflitos entre agentes
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, resolved, escalated]
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+      responses:
+        '200':
+          description: Lista de conflitos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictListResponse'
+
+  /api/mediation/conflicts/{conflictId}:
+    get:
+      tags:
+        - Mediator Agent
+      summary: Obter conflito
+      description: Obtém detalhes de um conflito específico
+      parameters:
+        - $ref: '#/components/parameters/ConflictIdParam'
+      responses:
+        '200':
+          description: Detalhes do conflito
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Mediator Agent
+      summary: Resolver conflito
+      description: Resolve um conflito entre agentes
+      parameters:
+        - $ref: '#/components/parameters/ConflictIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveConflictRequest'
+      responses:
+        '200':
+          description: Conflito resolvido com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Orchestrator Agent
+  /api/orchestration/workflows:
+    post:
+      tags:
+        - Orchestrator Agent
+      summary: Criar workflow
+      description: Cria um novo workflow de orquestração
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkflowRequest'
+      responses:
+        '201':
+          description: Workflow criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    get:
+      tags:
+        - Orchestrator Agent
+      summary: Listar workflows
+      description: Lista workflows de orquestração
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, active, paused, completed, failed]
+      responses:
+        '200':
+          description: Lista de workflows
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowListResponse'
+
+  /api/orchestration/workflows/{workflowId}:
+    get:
+      tags:
+        - Orchestrator Agent
+      summary: Obter workflow
+      description: Obtém detalhes de um workflow específico
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdParam'
+      responses:
+        '200':
+          description: Detalhes do workflow
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Orchestrator Agent
+      summary: Atualizar workflow
+      description: Atualiza um workflow existente
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorkflowRequest'
+      responses:
+        '200':
+          description: Workflow atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/orchestration/workflows/{workflowId}/start:
+    post:
+      tags:
+        - Orchestrator Agent
+      summary: Iniciar workflow
+      description: Inicia a execução de um workflow
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdParam'
+      responses:
+        '202':
+          description: Workflow iniciado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowExecutionResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Workflow já em execução
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/orchestration/workflows/{workflowId}/pause:
+    post:
+      tags:
+        - Orchestrator Agent
+      summary: Pausar workflow
+      description: Pausa a execução de um workflow
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdParam'
+      responses:
+        '200':
+          description: Workflow pausado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/orchestration/workflows/{workflowId}/resume:
+    post:
+      tags:
+        - Orchestrator Agent
+      summary: Retomar workflow
+      description: Retoma a execução de um workflow pausado
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdParam'
+      responses:
+        '200':
+          description: Workflow retomado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Health & Monitoring
+  /health:
+    get:
+      tags:
+        - Monitoramento
+      summary: Health check
+      description: Verifica a saúde do sistema
+      security: []
+      responses:
+        '200':
+          description: Sistema saudável
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Sistema com problemas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /metrics:
+    get:
+      tags:
+        - Monitoramento
+      summary: Métricas do sistema
+      description: Obtém métricas de performance e uso
+      responses:
+        '200':
+          description: Métricas do sistema
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+
+  # Schema Registry
+  /api/schemas:
+    get:
+      tags:
+        - Schema Registry
+      summary: Listar schemas
+      description: Lista todos os schemas registrados
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [belief, desire, intention, action]
+      responses:
+        '200':
+          description: Lista de schemas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaListResponse'
+
+    post:
+      tags:
+        - Schema Registry
+      summary: Registrar schema
+      description: Registra um novo schema
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSchemaRequest'
+      responses:
+        '201':
+          description: Schema registrado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/schemas/{schemaId}:
+    get:
+      tags:
+        - Schema Registry
+      summary: Obter schema
+      description: Obtém um schema específico
+      parameters:
+        - $ref: '#/components/parameters/SchemaIdParam'
+      responses:
+        '200':
+          description: Detalhes do schema
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Schema Registry
+      summary: Atualizar schema
+      description: Atualiza um schema existente
+      parameters:
+        - $ref: '#/components/parameters/SchemaIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSchemaRequest'
+      responses:
+        '200':
+          description: Schema atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Schema Registry
+      summary: Remover schema
+      description: Remove um schema
+      parameters:
+        - $ref: '#/components/parameters/SchemaIdParam'
+      responses:
+        '204':
+          description: Schema removido com sucesso
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/schemas/{schemaId}/validate:
+    post:
+      tags:
+        - Schema Registry
+      summary: Validar dados
+      description: Valida dados contra um schema
+      parameters:
+        - $ref: '#/components/parameters/SchemaIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Dados a serem validados
+      responses:
+        '200':
+          description: Validação realizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtido via endpoint /auth/login
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: Número da página
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    LimitParam:
+      name: limit
+      in: query
+      description: Número de itens por página
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+    SessionIdParam:
+      name: sessionId
+      in: path
+      required: true
+      description: ID da sessão
+      schema:
+        type: string
+        format: uuid
+
+    EventIdParam:
+      name: eventId
+      in: path
+      required: true
+      description: ID do evento
+      schema:
+        type: string
+        format: uuid
+
+    PlanIdParam:
+      name: planId
+      in: path
+      required: true
+      description: ID do plano
+      schema:
+        type: string
+        format: uuid
+
+    TaskIdParam:
+      name: taskId
+      in: path
+      required: true
+      description: ID da tarefa
+      schema:
+        type: string
+        format: uuid
+
+    ConflictIdParam:
+      name: conflictId
+      in: path
+      required: true
+      description: ID do conflito
+      schema:
+        type: string
+        format: uuid
+
+    WorkflowIdParam:
+      name: workflowId
+      in: path
+      required: true
+      description: ID do workflow
+      schema:
+        type: string
+        format: uuid
+
+    SchemaIdParam:
+      name: schemaId
+      in: path
+      required: true
+      description: ID do schema
+      schema:
+        type: string
+
+  responses:
+    BadRequest:
+      description: Requisição inválida
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Não autorizado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: Acesso negado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Recurso não encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalServerError:
+      description: Erro interno do servidor
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    # Base Schemas
+    BaseResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indica se a operação foi bem-sucedida
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp da resposta
+        requestId:
+          type: string
+          description: ID único da requisição
+      required:
+        - success
+        - timestamp
+
+    ErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            success:
+              type: boolean
+              enum: [false]
+            error:
+              type: object
+              properties:
+                code:
+                  type: string
+                  description: Código do erro
+                message:
+                  type: string
+                  description: Mensagem de erro
+                details:
+                  type: object
+                  description: Detalhes adicionais do erro
+              required:
+                - code
+                - message
+          required:
+            - error
+
+    SuccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            success:
+              type: boolean
+              enum: [true]
+            message:
+              type: string
+              description: Mensagem de sucesso
+
+    PaginatedResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            pagination:
+              type: object
+              properties:
+                page:
+                  type: integer
+                  description: Página atual
+                limit:
+                  type: integer
+                  description: Itens por página
+                total:
+                  type: integer
+                  description: Total de itens
+                totalPages:
+                  type: integer
+                  description: Total de páginas
+                hasNext:
+                  type: boolean
+                  description: Indica se há próxima página
+                hasPrev:
+                  type: boolean
+                  description: Indica se há página anterior
+              required:
+                - page
+                - limit
+                - total
+                - totalPages
+                - hasNext
+                - hasPrev
+          required:
+            - pagination
+
+    # Authentication Schemas
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Nome de usuário ou email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          description: Senha do usuário
+          example: password123
+      required:
+        - username
+        - password
+
+    LoginResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: JWT access token
+                refreshToken:
+                  type: string
+                  description: Refresh token
+                expiresIn:
+                  type: integer
+                  description: Tempo de expiração em segundos
+                user:
+                  $ref: '#/components/schemas/User'
+              required:
+                - token
+                - refreshToken
+                - expiresIn
+                - user
+          required:
+            - data
+
+    RefreshRequest:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+          description: Refresh token
+      required:
+        - refreshToken
+
+    TokenResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: Novo JWT access token
+                expiresIn:
+                  type: integer
+                  description: Tempo de expiração em segundos
+              required:
+                - token
+                - expiresIn
+          required:
+            - data
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID único do usuário
+        username:
+          type: string
+          description: Nome de usuário
+        email:
+          type: string
+          format: email
+          description: Email do usuário
+        role:
+          type: string
+          enum: [admin, user, agent]
+          description: Papel do usuário
+        createdAt:
+          type: string
+          format: date-time
+          description: Data de criação
+        updatedAt:
+          type: string
+          format: date-time
+          description: Data de atualização
+      required:
+        - id
+        - username
+        - email
+        - role
+        - createdAt
+        - updatedAt
+
+    SchemaResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Schema'
+          required:
+            - data
+
+    SchemaListResponse:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Schema'
+          required:
+            - data
+
+    ValidationResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                valid:
+                  type: boolean
+                  description: Indica se os dados são válidos
+                errors:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      path:
+                        type: string
+                        description: Caminho do erro
+                      message:
+                        type: string
+                        description: Mensagem de erro
+                      value:
+                        description: Valor que causou o erro
+                    required:
+                      - path
+                      - message
+                  description: Lista de erros de validação
+              required:
+                - valid
+          required:
+            - data
+
+    # Health & Monitoring Schemas
+    HealthResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [healthy, degraded, unhealthy]
+                  description: Status geral do sistema
+                version:
+                  type: string
+                  description: Versão da aplicação
+                uptime:
+                  type: integer
+                  description: Tempo de atividade em segundos
+                checks:
+                  type: object
+                  properties:
+                    database:
+                      $ref: '#/components/schemas/HealthCheck'
+                    redis:
+                      $ref: '#/components/schemas/HealthCheck'
+                    sqs:
+                      $ref: '#/components/schemas/HealthCheck'
+                    agents:
+                      $ref: '#/components/schemas/HealthCheck'
+                  description: Verificações de saúde dos componentes
+              required:
+                - status
+                - version
+                - uptime
+                - checks
+          required:
+            - data
+
+    HealthCheck:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          description: Status do componente
+        responseTime:
+          type: integer
+          description: Tempo de resposta em milissegundos
+        message:
+          type: string
+          description: Mensagem adicional
+        lastCheck:
+          type: string
+          format: date-time
+          description: Data da última verificação
+      required:
+        - status
+        - responseTime
+        - lastCheck
+
+    MetricsResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                system:
+                  type: object
+                  properties:
+                    cpu:
+                      type: number
+                      description: Uso de CPU em porcentagem
+                    memory:
+                      type: number
+                      description: Uso de memória em porcentagem
+                    disk:
+                      type: number
+                      description: Uso de disco em porcentagem
+                  required:
+                    - cpu
+                    - memory
+                    - disk
+                api:
+                  type: object
+                  properties:
+                    requests:
+                      type: integer
+                      description: Total de requisições
+                    errors:
+                      type: integer
+                      description: Total de erros
+                    averageResponseTime:
+                      type: number
+                      description: Tempo médio de resposta em ms
+                  required:
+                    - requests
+                    - errors
+                    - averageResponseTime
+                agents:
+                  type: object
+                  properties:
+                    active:
+                      type: integer
+                      description: Número de agentes ativos
+                    total:
+                      type: integer
+                      description: Total de agentes
+                    tasksCompleted:
+                      type: integer
+                      description: Tarefas completadas
+                    tasksFailed:
+                      type: integer
+                      description: Tarefas falhadas
+                  required:
+                    - active
+                    - total
+                    - tasksCompleted
+                    - tasksFailed
+              required:
+                - system
+                - api
+                - agents
+          required:
+            - data
+
+tags:
+  - name: Autenticação
+    description: Endpoints de autenticação e autorização
+  - name: Interface Agent
+    description: Endpoints do agente de interface com usuário
+  - name: Event Agent
+    description: Endpoints do agente de processamento de eventos
+  - name: Planning Agent
+    description: Endpoints do agente de planejamento
+  - name: Execution Agent
+    description: Endpoints do agente de execução
+  - name: Mediator Agent
+    description: Endpoints do agente mediador
+  - name: Orchestrator Agent
+    description: Endpoints do agente orquestrador
+  - name: Schema Registry
+    description: Endpoints do registro de schemas
+  - name: Monitoramento
+    description: Endpoints de monitoramento e saúde do sistema
+
+externalDocs:
+  description: Documentação completa do sistema
+  url: https://docs.agentesautonomos.com
+
+components:
+  schemas:
+    # Session Schemas
+    CreateSessionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Nome da sessão
+          example: Sessão de Planejamento
+        description:
+          type: string
+          description: Descrição da sessão
+        context:
+          type: object
+          description: Contexto inicial da sessão
+        metadata:
+          type: object
+          description: Metadados adicionais
+      required:
+        - name
+
+    UpdateSessionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Nome da sessão
+        description:
+          type: string
+          description: Descrição da sessão
+        status:
+          type: string
+          enum: [active, inactive, completed]
+          description: Status da sessão
+        context:
+          type: object
+          description: Contexto da sessão
+        metadata:
+          type: object
+          description: Metadados adicionais
+
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID único da sessão
+        name:
+          type: string
+          description: Nome da sessão
+        description:
+          type: string
+          description: Descrição da sessão
+        status:
+          type: string
+          enum: [active, inactive, completed]
+          description: Status da sessão
+        userId:
+          type: string
+          format: uuid
+          description: ID do usuário proprietário
+        context:
+          type: object
+          description: Contexto da sessão
+        metadata:
+          type: object
+          description: Metadados adicionais
+        createdAt:
+          type: string
+          format: date-time
+          description: Data de criação
+        updatedAt:
+          type: string
+          format: date-time
+          description: Data de atualização
+      required:
+        - id
+        - name
+        - status
+        - userId
+        - createdAt
+        - updatedAt
+
+    SessionResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Session'
+          required:
+            - data
+
+    SessionListResponse:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Session'
+          required:
+            - data
+
+    # Message Schemas
+    SendMessageRequest:
+      type: object
+      properties:
+        content:
+          type: string
+          description: Conteúdo da mensagem
+        type:
+          type: string
+          enum: [text, command, query]
+          description: Tipo da mensagem
+        metadata:
+          type: object
+          description: Metadados da mensagem
+      required:
+        - content
+        - type
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID único da mensagem
+        sessionId:
+          type: string
+          format: uuid
+          description: ID da sessão
+        content:
+          type: string
+          description: Conteúdo da mensagem
+        type:
+          type: string
+          enum: [text, command, query]
+          description: Tipo da mensagem
+        direction:
+          type: string
+          enum: [inbound, outbound]
+          description: Direção da mensagem
+        status:
+          type: string
+          enum: [sent, delivered, processed, failed]
+          description: Status da mensagem
+        metadata:
+          type: object
+          description: Metadados da mensagem
+        createdAt:
+          type: string
+          format: date-time
+          description: Data de criação
+        updatedAt:
+          type: string
+          format: date-time
+          description: Data de atualização
+      required:
+        - id
+        - sessionId
+        - content
+        - type
+        - direction
+        - status
+        - createdAt
+        - updatedAt
+
+    MessageResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Message'
+          required:
+            - data
+
+    MessageListResponse:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Message'
+          required:
+            - data
+
+    # Event Schemas
+    CreateEventRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Tipo do evento
+          example: user_action
+        source:
+          type: string
+          description: Origem do evento
+          example: interface-agent
+        data:
+          type: object
+          description: Dados do evento
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Prioridade do evento
+          default: medium
+        metadata:
+          type: object
+          description: Metadados do evento
+      required:
+        - type
+        - source
+        - data
+
+    UpdateEventRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+          description: Status do evento
+        data:
+          type: object
+          description: Dados do evento
+        metadata:
+          type: object
+          description: Metadados do evento
+
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID único do evento
+        type:
+          type: string
+          description: Tipo do evento
+        source:
+          type: string
+          description: Origem do evento
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+          description: Status do evento
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Prioridade do evento
+        data:
+          type: object
+          description: Dados do evento
+        metadata:
+          type: object
+          description: Metadados do evento
+        processedAt:
+          type: string
+          format: date-time
+          description: Data de processamento
+        createdAt:
+          type: string
+          format: date-time
+          description: Data de criação
+        updatedAt:
+          type: string
+          format: date-time
+          description: Data de atualização
+      required:
+        - id
+        - type
+        - source
+        - status
+        - priority
+        - data
+        - createdAt
+        - updatedAt
+
+    EventResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Event'
+          required:
+            - data
+
+    EventListResponse:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Event'
+          required:
+            - data
+
+    # Plan Schemas
+    CreatePlanRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Nome do plano
+          example: Plano de Execução A
+        description:
+          type: string
+          description: Descrição do plano
+        goal:
+          type: string
+          description: Objetivo do plano
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Prioridade do plano
+          default: medium
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanStep'
+          description: Passos do plano
+        constraints:
+          type: object
+          description: Restrições do plano
+        metadata:
+          type: object
+          description: Metadados do plano
+      required:
+        - name
+        - goal
+        - steps
+
+    UpdatePlanRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Nome do plano
+        description:
+          type: string
+          description: Descrição do plano
+        status:
+          type: string
+          enum: [draft, active, completed, failed, cancelled]
+          description: Status do plano
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Prioridade do plano
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanStep'
+          description: Passos do plano
+        constraints:
+          type: object
+          description: Restrições do plano
+        metadata:
+          type: object
+          description: Metadados do plano
+
+    PlanStep:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID do passo
+        name:
+          type: string
+          description: Nome do passo
+        description:
+          type: string
+          description: Descrição do passo
+        action:
+          type: string
+          description: Ação a ser executada
+        parameters:
+          type: object
+          description: Parâmetros da ação
+        dependencies:
+          type: array
+          items:
+            type: string
+          description: IDs dos passos dependentes
+        estimatedDuration:
+          type: integer
+          description: Duração estimada em segundos
+      required:
+        - id
+        - name
+        - action
+
+    Plan:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID único do plano
+        name:
+          type: string
+          description: Nome do plano
+        description:
+          type: string
+          description: Descrição do plano
+        goal:
+          type: string
+          description: Objetivo do plano
+        status:
+          type: string
+          enum: [draft, active, completed, failed, cancelled]
+          description: Status do plano
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Prioridade do plano
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanStep'
+          description: Passos do plano
+        constraints:
+          type: object
+          description: Restrições do plano
+        metadata:
+          type: object
+          description: Metadados do plano
+        createdBy:
+          type: string
+          format: uuid
+          description: ID do criador
+        createdAt:
+          type: string
+          format: date-time
+          description: Data de criação
+        updatedAt:
+          type: string
+          format: date-time
+          description: Data de atualização
+        startedAt:
+          type: string
+          format: date-time
+          description: Data de início
+        completedAt:
+          type: string
+          format: date-time
+          description: Data de conclusão
+      required:
+        - id
+        - name
+        - goal
+        - status
+        - priority
+        - steps
+        - createdBy
+        - createdAt
+        - updatedAt
+
+    PlanResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Plan'
+          required:
+            - data
+
+    PlanListResponse:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Plan'
+          required:
+            - data
+
+    ExecutionResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                executionId:
+                  type: string
+                  format: uuid
+                  description: ID da execução
+                status:
+                  type: string
+                  enum: [started, running, paused, completed, failed]
+                  description: Status da execução
+                startedAt:
+                  type: string
+                  format: date-time
+                  description: Data de início
+              required:
+                - executionId
+                - status
+                - startedAt
+          required:
+            - data
+
+    # Task Schemas
+    UpdateTaskRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, running, completed, failed, cancelled]
+          description: Status da tarefa
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Progresso da tarefa em porcentagem
+        result:
+          type: object
+          description: Resultado da tarefa
+        error:
+          type: string
+          description: Mensagem de erro (se houver)
+        metadata:
+          type: object
+          description: Metadados da tarefa
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID único da tarefa
+        planId:
+          type: string
+          format: uuid
+          description: ID do plano
+        stepId:
+          type: string
+          description: ID do passo do plano
+        name:
+          type: string
+          description: Nome da tarefa
+        description:
+          type: string
+          description: Descrição da tarefa
+        status:
+          type: string
+          enum: [pending, running, completed, failed, cancelled]
+          description: Status da tarefa
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Prioridade da tarefa
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Progresso da tarefa em porcentagem
+        action:
+          type: string
+          description: Ação a ser executada
+        parameters:
+          type: object
+          description: Parâmetros da ação
+        result:
+          type: object
+          description: Resultado da tarefa
+        error:
+          type: string
+          description: Mensagem de erro (se houver)
+        metadata:
+          type: object
+          description: Metadados da tarefa
+        assignedTo:
+          type: string
+          description: Agente responsável
+        createdAt:
+          type: string
+          format: date-time
+          description: Data de criação
+        updatedAt:
+          type: string
+          format: date-time
+          description: Data de atualização
+        startedAt:
+          type: string
+          format: date-time
+          description: Data de início
+        completedAt:
+          type: string
+          format: date-time
+          description: Data de conclusão
+      required:
+        - id
+        - planId
+        - stepId
+        - name
+        - status
+        - priority
+        - action
+        - assignedTo
+        - createdAt
+        - updatedAt
+
+    TaskResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Task'
+          required:
+            - data
+
+    TaskListResponse:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Task'
+          required:
+            - data
+
+    # Conflict Schemas
+    ResolveConflictRequest:
+      type: object
+      properties:
+        resolution:
+          type: string
+          description: Resolução do conflito
+        strategy:
+          type: string
+          enum: [negotiation, arbitration, escalation]
+          description: Estratégia de resolução
+        metadata:
+          type: object
+          description: Metadados da resolução
+      required:
+        - resolution
+        - strategy
+
+    Conflict:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID único do conflito
+        type:
+          type: string
+          description: Tipo do conflito
+        description:
+          type: string
+          description: Descrição do conflito
+        status:
+          type: string
+          enum: [active, resolved, escalated]
+          description: Status do conflito
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Severidade do conflito
+        involvedAgents:
+          type: array
+          items:
+            type: string
+          description: Agentes envolvidos
+        context:
+          type: object
+          description: Contexto do conflito
+        resolution:
+          type: string
+          description: Resolução do conflito
+        strategy:
+          type: string
+          enum: [negotiation, arbitration, escalation]
+          description: Estratégia de resolução
+        metadata:
+          type: object
+          description: Metadados do conflito
+        createdAt:
+          type: string
+          format: date-time
+          description: Data de criação
+        updatedAt:
+          type: string
+          format: date-time
+          description: Data de atualização
+        resolvedAt:
+          type: string
+          format: date-time
+          description: Data de resolução
+      required:
+        - id
+        - type
+        - description
+        - status
+        - severity
+        - involvedAgents
+        - createdAt
+        - updatedAt
+
+    ConflictResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Conflict'
+          required:
+            - data
+
+    ConflictListResponse:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Conflict'
+          required:
+            - data
+
+    # Workflow Schemas
+    CreateWorkflowRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Nome do workflow
+          example: Workflow de Processamento
+        description:
+          type: string
+          description: Descrição do workflow
+        definition:
+          type: object
+          description: Definição do workflow (BPMN ou similar)
+        variables:
+          type: object
+          description: Variáveis do workflow
+        metadata:
+          type: object
+          description: Metadados do workflow
+      required:
+        - name
+        - definition
+
+    UpdateWorkflowRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Nome do workflow
+        description:
+          type: string
+          description: Descrição do workflow
+        status:
+          type: string
+          enum: [draft, active, paused, completed, failed]
+          description: Status do workflow
+        definition:
+          type: object
+          description: Definição do workflow
+        variables:
+          type: object
+          description: Variáveis do workflow
+        metadata:
+          type: object
+          description: Metadados do workflow
+
+    Workflow:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID único do workflow
+        name:
+          type: string
+          description: Nome do workflow
+        description:
+          type: string
+          description: Descrição do workflow
+        status:
+          type: string
+          enum: [draft, active, paused, completed, failed]
+          description: Status do workflow
+        definition:
+          type: object
+          description: Definição do workflow
+        variables:
+          type: object
+          description: Variáveis do workflow
+        metadata:
+          type: object
+          description: Metadados do workflow
+        createdBy:
+          type: string
+          format: uuid
+          description: ID do criador
+        createdAt:
+          type: string
+          format: date-time
+          description: Data de criação
+        updatedAt:
+          type: string
+          format: date-time
+          description: Data de atualização
+        startedAt:
+          type: string
+          format: date-time
+          description: Data de início
+        completedAt:
+          type: string
+          format: date-time
+          description: Data de conclusão
+      required:
+        - id
+        - name
+        - status
+        - definition
+        - createdBy
+        - createdAt
+        - updatedAt
+
+    WorkflowResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Workflow'
+          required:
+            - data
+
+    WorkflowListResponse:
+      allOf:
+        - $ref: '#/components/schemas/PaginatedResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Workflow'
+          required:
+            - data
+
+    WorkflowExecutionResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                executionId:
+                  type: string
+                  format: uuid
+                  description: ID da execução
+                workflowId:
+                  type: string
+                  format: uuid
+                  description: ID do workflow
+                status:
+                  type: string
+                  enum: [started, running, paused, completed, failed]
+                  description: Status da execução
+                startedAt:
+                  type: string
+                  format: date-time
+                  description: Data de início
+              required:
+                - executionId
+                - workflowId
+                - status
+                - startedAt
+          required:
+            - data
+
+    # Schema Registry Schemas
+    CreateSchemaRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Nome do schema
+          example: UserActionSchema
+        version:
+          type: string
+          description: Versão do schema
+          example: 1.0.0
+        type:
+          type: string
+          enum: [belief, desire, intention, action]
+          description: Tipo do schema
+        schema:
+          type: object
+          description: Definição JSON Schema
+        description:
+          type: string
+          description: Descrição do schema
+        metadata:
+          type: object
+          description: Metadados do schema
+      required:
+        - name
+        - version
+        - type
+        - schema
+
+    UpdateSchemaRequest:
+      type: object
+      properties:
+        version:
+          type: string
+          description: Nova versão do schema
+        schema:
+          type: object
+          description: Definição JSON Schema atualizada
+        description:
+          type: string
+          description: Descrição do schema
+        metadata:
+          type: object
+          description: Metadados do schema
+
+    Schema:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID único do schema
+        name:
+          type: string
+          description: Nome do schema
+        version:
+          type: string
+          description: Versão do schema
+        type:
+          type: string
+          enum: [belief, desire, intention, action]
+          description: Tipo do schema
+        schema:
+          type: object
+          description: Definição JSON Schema
+        description:
+          type: string
+          description: Descrição do schema
+        metadata:
+          type: object
+          description: Metadados do schema
+        createdAt:
+          type: string
+          format: date-time
+          description: Data de criação
+        updatedAt:
+          type: string
+          format: date-time
+          description: Data de atualização
+      required:
+        - id
+        - name
+        - version
+        - type
+        - schema
+        - createdAt
+        - updatedAt

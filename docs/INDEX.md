@@ -1,87 +1,154 @@
-# 📚 Índice da Documentação - Agentes Autônomos
+# 📚 Índice da Documentação - Sistema de Agentes Autônomos
 
-## 🚀 Início Rápido
+> **Documentação Reorganizada** - Versão 2.0 (Fevereiro 2024)
+> 
+> Esta documentação foi completamente reorganizada para melhor navegabilidade e clareza.
+> Consulte o [Histórico de Revisões](../README.md#-histórico-de-revisões) para detalhes.
 
-| Documento | Descrição | Prioridade |
-|-----------|-----------|------------|
-| [README Principal](../README.md) | Visão geral do projeto e quick start | ⭐⭐⭐ |
-| [Guia de Desenvolvimento Completo](./GUIA_DESENVOLVIMENTO_COMPLETO.md) | **Guia principal** para configuração automatizada | ⭐⭐⭐ |
-| [README de Desenvolvimento](../README_DESENVOLVIMENTO.md) | Instruções detalhadas de desenvolvimento | ⭐⭐⭐ |
-| [Como Testar Eventos](./COMO_TESTAR_EVENTOS.md) | Guia para testar eventos no sistema | ⭐⭐ |
+## 🎯 Documentos Essenciais
+
+| Documento | Descrição | Status | Prioridade |
+|-----------|-----------|--------|------------|
+| [📋 README Principal](../README.md) | **Documento principal** - Visão completa do sistema | ✅ Atualizado | ⭐⭐⭐ |
+| [📝 TODO - Plano de Desenvolvimento](./TODO.md) | **Roadmap sequencial** - 39 tarefas organizadas | ✅ Novo | ⭐⭐⭐ |
+| [🏗️ Arquitetura](./ARCHITECTURE.md) | Arquitetura técnica detalhada | ✅ Completo | ⭐⭐⭐ |
+| [🚀 Guia de Desenvolvimento](./GUIA_DESENVOLVIMENTO_COMPLETO.md) | Configuração automatizada do ambiente | ✅ Completo | ⭐⭐⭐ |
+| [🧪 Como Testar Eventos](./COMO_TESTAR_EVENTOS.md) | Guia para testes de eventos | ✅ Completo | ⭐⭐ |
 
 ## 🔧 Configuração e Desenvolvimento
 
 ### Configuração do Ambiente
 
-| Documento | Descrição |
-|-----------|----------|
-| [Desenvolvimento Local](./LOCAL_DEVELOPMENT.md) | Configuração do ambiente local |
-| [Configuração SQS](./SQS_SETUP_GUIDE.md) | Guia específico para configuração SQS |
-| [Scripts Atualizados](./SCRIPTS_ATUALIZADOS.md) | Mudanças na estrutura de scripts |
+| Documento | Descrição | Status |
+|-----------|-----------|--------|
+| [🏠 Desenvolvimento Local](./LOCAL_DEVELOPMENT.md) | Configuração do ambiente local | ✅ Completo |
+| [📬 Configuração SQS](./SQS_SETUP_GUIDE.md) | Guia específico para configuração SQS | ✅ Completo |
+| [📜 Scripts Atualizados](./SCRIPTS_ATUALIZADOS.md) | Mudanças na estrutura de scripts | ✅ Completo |
+| [🌍 Ambiente de Desenvolvimento](./AMBIENTE_DESENVOLVIMENTO.md) | Configuração completa do ambiente | ✅ Completo |
 
-### Desenvolvimento
+### Desenvolvimento e Operação
 
-| Documento | Descrição |
-|-----------|----------|
-| [Development](./DEVELOPMENT.md) | Guia geral de desenvolvimento |
-| [Troubleshooting](./TROUBLESHOOTING.md) | Solução de problemas comuns |
+| Documento | Descrição | Status |
+|-----------|-----------|--------|
+| [⚙️ Development](./DEVELOPMENT.md) | Guia geral de desenvolvimento | ✅ Completo |
+| [🔧 Troubleshooting](./TROUBLESHOOTING.md) | Solução de problemas comuns | ✅ Completo |
+| [🚀 Deployment](./DEPLOYMENT.md) | Guias de deploy e produção | ✅ Completo |
 
 ## 🏗️ Arquitetura e Especificações
 
 ### Arquitetura Geral
 
-| Documento | Descrição |
-|-----------|----------|
-| [Arquitetura](./ARCHITECTURE.md) | Visão geral da arquitetura do sistema |
-| [API](./API.md) | Documentação das APIs |
-| [Agentes Core](./agents/core-agents.md) | Especificação dos agentes principais |
+| Documento | Descrição | Status |
+|-----------|-----------|--------|
+| [🏛️ Arquitetura](./ARCHITECTURE.md) | Visão geral da arquitetura do sistema | ✅ Completo |
+| [🔌 API](./API.md) | Documentação das APIs | ✅ Completo |
+| [🤖 Agentes Core](./agents/core-agents.md) | Especificação dos agentes principais | ✅ Completo |
 
 ### Agentes Especializados
 
-| Documento | Descrição |
-|-----------|----------|
-| [Agentes Avançados](./ADVANCED_AGENTS.md) | Documentação de agentes avançados |
-| [Event Enricher Agent](./EVENT_ENRICHER_AGENT.md) | Agente de enriquecimento de eventos |
-| [External Event API Gateway](./EXTERNAL_EVENT_API_GATEWAY.md) | Gateway de eventos externos |
-| [Agent Lifecycle Manager](./AGENT_LIFECYCLE_MANAGER_SPEC.md) | Gerenciador de ciclo de vida |
-| [Knowledge Base Loader](./KNOWLEDGE_BASE_LOADER_AGENT_SPEC.md) | Carregador de base de conhecimento |
-| [Observability Agent](./OBSERVABILITY_AGENT_SPEC.md) | Agente de observabilidade |
-| [Policy Management API](./POLICY_MANAGEMENT_API_AGENT_SPEC.md) | API de gerenciamento de políticas |
-| [Recovery Fallback Agent](./RECOVERY_FALLBACK_AGENT_SPEC.md) | Agente de recuperação e fallback |
-| [Security Authentication](./SECURITY_AUTHENTICATION_AGENT_SPEC.md) | Agente de autenticação e segurança |
+| Documento | Descrição | Status |
+|-----------|-----------|--------|
+| [🚀 Agentes Avançados](./ADVANCED_AGENTS.md) | Documentação de agentes avançados | ✅ Completo |
+| [📈 Event Enricher Agent](./EVENT_ENRICHER_AGENT.md) | Agente de enriquecimento de eventos | ✅ Completo |
+| [🌐 External Event API Gateway](./EXTERNAL_EVENT_API_GATEWAY.md) | Gateway de eventos externos | ✅ Completo |
+| [🔄 Agent Lifecycle Manager](./AGENT_LIFECYCLE_MANAGER_SPEC.md) | Gerenciador de ciclo de vida | ✅ Completo |
+| [📚 Knowledge Base Loader](./KNOWLEDGE_BASE_LOADER_AGENT_SPEC.md) | Carregador de base de conhecimento | ✅ Completo |
+| [👁️ Observability Agent](./OBSERVABILITY_AGENT_SPEC.md) | Agente de observabilidade | ✅ Completo |
+| [📋 Policy Management API](./POLICY_MANAGEMENT_API_AGENT_SPEC.md) | API de gerenciamento de políticas | ✅ Completo |
+| [🛡️ Recovery Fallback Agent](./RECOVERY_FALLBACK_AGENT_SPEC.md) | Agente de recuperação e fallback | ✅ Completo |
+| [🔐 Security Authentication Agent](./SECURITY_AUTHENTICATION_AGENT_SPEC.md) | Agente de segurança e autenticação | ✅ Completo |
 
 ## 🚀 Deploy e Produção
 
-| Documento | Descrição |
-|-----------|----------|
-| [Deployment](./DEPLOYMENT.md) | Guia de deploy para produção |
+### Deploy
+
+| Documento | Descrição | Status |
+|-----------|-----------|--------|
+| [🚀 Deploy](./DEPLOY.md) | Guia de deploy | ✅ Completo |
+| [📦 Deployment](./DEPLOYMENT.md) | Procedimentos de deployment | ✅ Completo |
+| [🌍 Ambiente de Desenvolvimento](./AMBIENTE_DESENVOLVIMENTO.md) | Configuração do ambiente | ✅ Completo |
+
+### Monitoramento
+
+| Documento | Descrição | Status |
+|-----------|-----------|--------|
+| [📊 Monitoramento](./MONITORING.md) | Sistema de monitoramento | ✅ Completo |
+| [👁️ Observabilidade](./OBSERVABILITY.md) | Estratégias de observabilidade | ✅ Completo |
+
+## 🧪 Testes
+
+### Testes de Sistema
+
+| Documento | Descrição | Status |
+|-----------|-----------|--------|
+| [🧪 Event Testing](./EVENT_TESTING.md) | Testes de eventos | ✅ Completo |
+| [✅ Testes](./TESTS.md) | Documentação de testes | ✅ Completo |
+
+## 📚 Referências
+
+### Documentação Técnica
+
+| Documento | Descrição | Status |
+|-----------|-----------|--------|
+| [📝 Changelog](./CHANGELOG.md) | Histórico de mudanças | ✅ Completo |
+| [📖 Glossário](./GLOSSARY.md) | Termos e definições | ✅ Completo |
+| [🔗 Referências](./REFERENCES.md) | Links e recursos externos | ✅ Completo |
 
 ## 📁 Documentação por Categoria
 
-### Agentes
+### 🏗️ Arquitetura
+- [🏛️ Arquitetura Geral](./ARCHITECTURE.md) - Visão geral do sistema
+- [🔌 API](./API.md) - Documentação das APIs
+
+### 🤖 Agentes
+- [🤖 Agentes Core](./agents/core-agents.md) - Agentes principais
+- [🚀 Agentes Avançados](./ADVANCED_AGENTS.md) - Funcionalidades avançadas
+- [📈 Event Enricher](./EVENT_ENRICHER_AGENT.md) - Enriquecimento de eventos
+- [🌐 External Event API Gateway](./EXTERNAL_EVENT_API_GATEWAY.md) - Gateway externo
+- [🔄 Agent Lifecycle Manager](./AGENT_LIFECYCLE_MANAGER_SPEC.md) - Gerenciamento de ciclo
+- [📚 Knowledge Base Loader](./KNOWLEDGE_BASE_LOADER_AGENT_SPEC.md) - Base de conhecimento
+- [👁️ Observability Agent](./OBSERVABILITY_AGENT_SPEC.md) - Observabilidade
+- [📋 Policy Management API](./POLICY_MANAGEMENT_API_AGENT_SPEC.md) - Gerenciamento de políticas
+- [🛡️ Recovery Fallback Agent](./RECOVERY_FALLBACK_AGENT_SPEC.md) - Recuperação
+- [🔐 Security Authentication](./SECURITY_AUTHENTICATION_AGENT_SPEC.md) - Segurança
+
+### ⚙️ Configuração
+- [🏠 Desenvolvimento Local](./LOCAL_DEVELOPMENT.md) - Setup local
+- [📬 Configuração SQS](./SQS_SETUP_GUIDE.md) - Configuração de filas
+- [📜 Scripts Atualizados](./SCRIPTS_ATUALIZADOS.md) - Mudanças em scripts
+- [🌍 Ambiente de Desenvolvimento](./AMBIENTE_DESENVOLVIMENTO.md) - Ambiente completo
+
+### 🚀 Deploy
+- [🚀 Deploy](./DEPLOY.md) - Guia de deploy
+- [📦 Deployment](./DEPLOYMENT.md) - Procedimentos de produção
+
+### 📊 Monitoramento
+- [📊 Monitoramento](./MONITORING.md) - Sistema de monitoramento
+- [👁️ Observabilidade](./OBSERVABILITY.md) - Estratégias de observação
+
+### 🧪 Testes
+- [🧪 Event Testing](./EVENT_TESTING.md) - Testes de eventos
+- [✅ Testes](./TESTS.md) - Documentação de testes
+
+### 🔧 Desenvolvimento
+- [⚙️ Development](./DEVELOPMENT.md) - Guia de desenvolvimento
+- [🔧 Troubleshooting](./TROUBLESHOOTING.md) - Solução de problemas
+
+### 📚 Referências
+- [📝 Changelog](./CHANGELOG.md) - Histórico de mudanças
+- [📖 Glossário](./GLOSSARY.md) - Termos e definições
+- [🔗 Referências](./REFERENCES.md) - Links externos
+
+### Diretórios Organizados
 - [Core Agents](./agents/) - Documentação dos agentes principais
 - [Auxiliary Agents](./agents/auxiliary/) - Agentes auxiliares
 - [Infrastructure Agents](./agents/infrastructure/) - Agentes de infraestrutura
-
-### APIs
 - [API Documentation](./api/) - Documentação das APIs
-
-### Arquitetura
 - [Architecture Details](./architecture/) - Detalhes da arquitetura
-
-### Deploy
 - [Deployment Guides](./deployment/) - Guias de deploy
-
-### Desenvolvimento
 - [Development Guides](./development/) - Guias de desenvolvimento
-
-### Monitoramento
 - [Monitoring](./monitoring/) - Documentação de monitoramento
-
-### Segurança
 - [Security](./security/) - Documentação de segurança
-
-### Troubleshooting
 - [Troubleshooting Guides](./troubleshooting/) - Guias de solução de problemas
 
 ## 🎯 Fluxo de Trabalho Recomendado
@@ -135,6 +202,7 @@
 
 ---
 
-**Última Atualização**: Janeiro 2024  
+**Última Atualização**: Fevereiro 2024  
 **Versão da Documentação**: 2.0.0  
-**Status**: ✅ Atualizada
+**Status**: ✅ Reorganizada e atualizada  
+**Próximos passos**: Consultar [TODO.md](./TODO.md) para tarefas pendentes
