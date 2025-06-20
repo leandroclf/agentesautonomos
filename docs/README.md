@@ -1,206 +1,361 @@
-# Sistema de Agentes Autônomos
+# Agentes Autônomos - Sistema Multi-Agente
 
 ## Visão Geral
 
-Sistema multi-agente autônomo para automação de processos empresariais, utilizando arquitetura baseada em SQS para comunicação assíncrona entre agentes especializados.
+Sistema distribuído de agentes autônomos para automação inteligente de processos, com arquitetura baseada em microserviços e comunicação assíncrona.
 
-## 🏗️ Arquitetura
+## Arquitetura Simplificada
 
-### Agentes Core
-- **Interface Agent**: Gerencia interações com usuários e sistemas externos
-- **Planning Agent**: Responsável pelo planejamento e coordenação de tarefas
-- **Execution Agent**: Executa tarefas e operações específicas
-- **Monitoring Agent**: Monitora performance e saúde do sistema
+### Estrutura de Ambientes
 
-### Agentes Auxiliares
-- **Security Agent**: Gerencia autenticação, autorização e auditoria
-- **Event Agent**: Processa eventos e notificações do sistema
-- **Policy Agent**: Aplica políticas e regras de negócio
+#### 🔧 Desenvolvimento Local
+- **LocalStack**: Simula todos os serviços AWS
+- **Docker Compose**: Orquestração local
+- **Script único**: `start-dev-environment.js`
 
-### Infraestrutura
-- **SQS Service**: Comunicação assíncrona entre agentes
-- **Logging System**: Sistema de logs estruturado
-- **Monitoring System**: Métricas, health checks e alertas
-- **Configuration Management**: Gerenciamento centralizado de configurações
+#### ☁️ Produção AWS
+- **Serviços AWS reais**: SQS, RDS, ElastiCache, S3
+- **Docker Swarm/ECS**: Orquestração em produção
+- **Deploy automatizado**: `deploy-production.js`
 
-## 🚀 Quick Start
+### Agentes do Sistema
 
-### Pré-requisitos
-- Node.js 18+
-- AWS CLI configurado (para produção)
-- Docker (opcional, para LocalStack)
+| Agente | Porta | Responsabilidade |
+|--------|-------|------------------|
+| **External Gateway** | 3001 | API externa e roteamento |
+| **Interface Agent** | 3002 | Interface com usuários |
+| **Event Agent** | 3003 | Processamento de eventos |
+| **Planning Agent** | 3004 | Planejamento de ações |
+| **Execution Agent** | 3005 | Execução de tarefas |
+| **Monitoring Agent** | 3006 | Monitoramento do sistema |
+| **Learning Agent** | 3007 | Aprendizado de máquina |
+| **Coordination Agent** | 3008 | Coordenação entre agentes |
+| **Resource Agent** | 3009 | Gerenciamento de recursos |
+| **Security Agent** | 3010 | Segurança e autenticação |
+| **Context Agent** | 3011 | Contexto e memória |
 
-### Instalação
+## Início Rápido
+
+### Desenvolvimento Local
 
 ```bash
-# Clonar repositório
+# 1. Clonar repositório
 git clone <repository-url>
 cd agentesautonomos
 
-# Instalar dependências
+# 2. Instalar dependências
 npm install
 
-# Configurar ambiente de desenvolvimento
-cp .env.example .env.development
-
-# Iniciar LocalStack (desenvolvimento)
-npm run localstack:start
-
-# Configurar SQS local
-npm run setup:aws
+# 3. Iniciar ambiente completo
+node dev/scripts/start-dev-environment.js
 ```
 
-### Desenvolvimento
+### Produção AWS
 
 ```bash
-# Iniciar todos os agentes
-npm run start:agents
+# 1. Configurar credenciais AWS
+aws configure
 
-# Iniciar monitoramento
-npm run monitor:start
+# 2. Configurar variáveis de ambiente
+cp .env.production.example .env.production
+# Editar .env.production com valores reais
 
-# Executar testes
-npm test
+# 3. Deploy
+node deploy/aws/deploy-production.js
 ```
 
-### Produção
+## Estrutura do Projeto
 
-```bash
-# Configurar AWS SQS para produção
-npm run setup:aws-production
-
-# Migrar para SQS real
-npm run switch-to-real-sqs
-
-# Testar conectividade
-npm run test:sqs
-
-# Iniciar sistema
-npm start
+```
+agentesautonomos/
+├── agents/                          # Código dos agentes
+│   ├── core/                       # Agentes principais
+│   │   ├── event-agent/
+│   │   ├── planning-agent/
+│   │   ├── execution-agent/
+│   │   └── monitoring-agent/
+│   ├── auxiliary/                  # Agentes auxiliares
+│   │   ├── learning-agent/
+│   │   ├── coordination-agent/
+│   │   ├── resource-agent/
+│   │   ├── security-agent/
+│   │   └── context-agent/
+│   └── external/                   # Gateway externo
+│       └── gateway/
+├── shared/                         # Código compartilhado
+│   ├── utils/
+│   ├── config/
+│   └── types/
+├── dev/                           # Scripts de desenvolvimento
+│   └── scripts/
+│       ├── start-dev-environment.js
+│       ├── setup-local-environment.js
+│       ├── monitor.js
+│       └── test-system.js
+├── deploy/                        # Scripts de deploy
+│   └── aws/
+│       ├── deploy-production.js
+│       ├── setup.js
+│       └── verify.js
+├── config/                        # Configurações
+│   ├── prometheus.yml
+│   └── grafana/
+├── docs/                          # Documentação
+│   ├── LOCAL_DEVELOPMENT.md
+│   ├── AWS_DEPLOYMENT.md
+│   └── ARCHITECTURE.md
+├── docker-compose.dev.yml         # Docker para desenvolvimento
+├── docker-compose.aws.yml         # Docker para produção
+├── .env.development.local         # Config desenvolvimento
+└── .env.production               # Config produção
 ```
 
-## 📚 Documentação
+## Tecnologias Utilizadas
 
-- [Arquitetura do Sistema](./docs/architecture/README.md)
-- [Guia de Desenvolvimento](./docs/development/README.md)
-- [Documentação da API](./docs/api/README.md)
-- [Deployment](./docs/deployment/README.md)
-- [Monitoramento](./docs/monitoring/README.md)
-- [Segurança](./docs/security/README.md)
-- [Troubleshooting](./docs/troubleshooting/README.md)
+### Backend
+- **Node.js**: Runtime JavaScript
+- **Express.js**: Framework web
+- **TypeScript**: Tipagem estática
 
-## 🔧 Scripts Disponíveis
+### Infraestrutura
+- **Docker**: Containerização
+- **Docker Compose**: Orquestração local
+- **LocalStack**: Simulação AWS local
 
-### Desenvolvimento
-- `npm run dev`: Iniciar em modo desenvolvimento
-- `npm run test`: Executar testes
-- `npm run test:watch`: Executar testes em modo watch
-- `npm run lint`: Verificar código com ESLint
-- `npm run format`: Formatar código com Prettier
+### Banco de Dados
+- **PostgreSQL**: Banco principal
+- **Redis**: Cache e sessões
 
-### Agentes
-- `npm run start:agents`: Iniciar todos os agentes
-- `npm run start:interface`: Iniciar apenas interface agent
-- `npm run start:planning`: Iniciar apenas planning agent
-- `npm run start:execution`: Iniciar apenas execution agent
-
-### AWS/SQS
-- `npm run setup:aws`: Configurar AWS local (LocalStack)
-- `npm run setup:aws-production`: Configurar AWS produção
-- `npm run test:sqs`: Testar conectividade SQS
-- `npm run switch-to-real-sqs`: Migrar para SQS real
+### Mensageria
+- **AWS SQS**: Filas de mensagens
+- **LocalStack SQS**: Simulação local
 
 ### Monitoramento
-- `npm run monitor:start`: Iniciar sistema de monitoramento
-- `npm run logs:view`: Visualizar logs do sistema
-- `npm run logs:errors`: Visualizar logs de erro
-- `npm run test:system`: Testar integração do sistema
+- **Prometheus**: Coleta de métricas
+- **Grafana**: Visualização de dados
+- **Health Checks**: Verificação de saúde
 
-### Utilitários
-- `npm run clean`: Limpar arquivos temporários
-- `npm run setup:logging-monitoring`: Configurar logging e monitoramento
-- `npm run implement:handlers`: Implementar handlers faltantes
+### AWS (Produção)
+- **RDS**: PostgreSQL gerenciado
+- **ElastiCache**: Redis gerenciado
+- **SQS**: Filas de mensagens
+- **S3**: Armazenamento de objetos
+- **CloudWatch**: Logs e métricas
 
-## 🌍 Ambientes
+## Fluxo de Comunicação
+
+```mermaid
+graph TD
+    A[External Gateway] --> B[Interface Agent]
+    B --> C[Event Agent]
+    C --> D[Planning Agent]
+    D --> E[Execution Agent]
+    E --> F[Monitoring Agent]
+    
+    G[Learning Agent] --> D
+    H[Coordination Agent] --> D
+    I[Resource Agent] --> E
+    J[Security Agent] --> A
+    K[Context Agent] --> C
+    
+    L[SQS Queues] --> C
+    L --> D
+    L --> E
+    L --> F
+    
+    M[PostgreSQL] --> C
+    M --> D
+    M --> E
+    
+    N[Redis] --> B
+    N --> K
+```
+
+## Configuração de Ambiente
+
+### Variáveis de Ambiente
+
+#### Desenvolvimento Local (`.env.development.local`)
+```env
+# Redis Local
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# PostgreSQL Local
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=agentes_autonomos
+
+# LocalStack
+LOCALSTACK_ENDPOINT=http://localhost:4566
+AWS_REGION=us-east-1
+```
+
+#### Produção AWS (`.env.production`)
+```env
+# AWS Credentials
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+
+# RDS PostgreSQL
+POSTGRES_HOST=your-rds-endpoint
+POSTGRES_PORT=5432
+POSTGRES_DB=agentes_autonomos
+
+# ElastiCache Redis
+REDIS_HOST=your-elasticache-endpoint
+REDIS_PORT=6379
+
+# SQS Queues
+SQS_ENDPOINT=https://sqs.us-east-1.amazonaws.com
+```
+
+## Scripts Principais
 
 ### Desenvolvimento
-- LocalStack para AWS services
-- Mock APIs para serviços externos
-- Logs detalhados habilitados
-- Hot reload ativado
+```bash
+# Iniciar ambiente completo
+node dev/scripts/start-dev-environment.js
+
+# Configurar apenas infraestrutura
+node dev/scripts/setup-local-environment.js
+
+# Monitorar sistema
+node dev/scripts/monitor.js
+
+# Executar testes
+node dev/scripts/test-system.js
+```
 
 ### Produção
-- AWS SQS real
-- APIs externas reais
-- Logs otimizados
-- Monitoramento completo
-- Alertas configurados
+```bash
+# Deploy completo
+node deploy/aws/deploy-production.js
 
-## 📊 Monitoramento
+# Configurar recursos AWS
+node deploy/aws/setup.js
 
-### Endpoints de Monitoramento
-- `GET /health`: Status geral do sistema
-- `GET /metrics`: Métricas do sistema (JSON/Prometheus)
-- `GET /alerts`: Alertas ativos
-- `GET /status`: Status detalhado dos componentes
+# Verificar deploy
+node deploy/aws/verify.js
+```
+
+## Monitoramento
+
+### URLs de Monitoramento
+- **Grafana**: http://localhost:3000 (admin/admin123)
+- **Prometheus**: http://localhost:9090
+- **PgAdmin**: http://localhost:8080 (admin@agentes.local/admin123)
+- **Redis Commander**: http://localhost:8081
 
 ### Métricas Coletadas
 - Performance dos agentes
-- Uso de memória e CPU
-- Latência de comunicação SQS
-- Taxa de erro por componente
-- Throughput de mensagens
+- Latência das requisições
+- Throughput das filas
+- Uso de recursos (CPU, memória)
+- Erros e exceções
 
-## 🔒 Segurança
+## Segurança
 
-- Autenticação baseada em tokens JWT
-- Autorização por roles e permissões
-- Auditoria completa de ações
-- Criptografia de dados sensíveis
-- Rate limiting em APIs
+### Desenvolvimento
+- Credenciais padrão para facilitar desenvolvimento
+- Dados locais não persistentes
+- CORS liberado para localhost
 
-## 🤝 Contribuição
+### Produção
+- Credenciais via AWS Secrets Manager
+- Criptografia em trânsito e repouso
+- CORS restrito
+- Rate limiting ativo
+- Logs de auditoria
 
-1. Fork o projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
+## Testes
 
-## 📝 Licença
+### Tipos de Teste
+- **Unitários**: Testes de componentes individuais
+- **Integração**: Testes entre agentes
+- **E2E**: Testes de fluxo completo
+- **Performance**: Testes de carga
 
-Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
+### Executar Testes
+```bash
+# Todos os testes
+npm test
 
-## 📞 Suporte
+# Testes unitários
+npm run test:unit
 
-- Documentação: [docs/](./docs/)
-- Issues: [GitHub Issues](https://github.com/your-org/agentesautonomos/issues)
-- Wiki: [GitHub Wiki](https://github.com/your-org/agentesautonomos/wiki)
+# Testes de integração
+npm run test:integration
 
-## 🗺️ Roadmap
+# Testes E2E
+npm run test:e2e
+```
 
-### Fase 1: Configuração para Produção (Semana 1)
-- ✅ Configuração de logging e monitoramento
-- ✅ Migração para SQS real
-- ✅ Implementação de handlers faltantes
-- ✅ Documentação técnica
-- 🔄 Testes de integração
-- 🔄 Configuração de CI/CD
+## Troubleshooting
 
-### Fase 2: Otimização e Escalabilidade (Semana 2)
-- 🔄 Otimização de performance
-- 🔄 Implementação de cache
-- 🔄 Balanceamento de carga
-- 🔄 Auto-scaling
+### Problemas Comuns
 
-### Fase 3: Recursos Avançados (Semana 3-4)
-- 🔄 Machine Learning integrado
-- 🔄 Analytics avançado
-- 🔄 Dashboard web
-- 🔄 Mobile app
+1. **Portas em uso**: Verificar processos rodando nas portas
+2. **Docker não inicia**: Verificar Docker Desktop
+3. **Serviços não conectam**: Verificar logs dos containers
+4. **Performance baixa**: Verificar recursos do sistema
+
+### Logs
+```bash
+# Logs de desenvolvimento
+docker-compose -f docker-compose.dev.yml logs -f
+
+# Logs de produção
+aws logs tail /aws/ecs/agentes-autonomos --follow
+```
+
+## Contribuição
+
+### Fluxo de Desenvolvimento
+1. Fork do repositório
+2. Criar branch feature
+3. Desenvolver localmente
+4. Executar testes
+5. Criar Pull Request
+
+### Padrões de Código
+- **ESLint**: Linting JavaScript/TypeScript
+- **Prettier**: Formatação de código
+- **Conventional Commits**: Padrão de commits
+- **Clean Architecture**: Arquitetura limpa
+
+## Roadmap
+
+### Versão Atual (v1.0)
+- ✅ Arquitetura básica dos agentes
+- ✅ Comunicação via SQS
+- ✅ Ambiente de desenvolvimento
+- ✅ Deploy AWS básico
+
+### Próximas Versões
+- 🔄 Interface web para administração
+- 🔄 Machine Learning avançado
+- 🔄 Auto-scaling automático
+- 🔄 Multi-região AWS
+
+## Documentação Adicional
+
+- [Desenvolvimento Local](./LOCAL_DEVELOPMENT.md)
+- [Deploy AWS](./AWS_DEPLOYMENT.md)
+- [Arquitetura Detalhada](./ARCHITECTURE.md)
+- [API Reference](./API_REFERENCE.md)
+- [Troubleshooting](./TROUBLESHOOTING.md)
+
+## Suporte
+
+- **Issues**: GitHub Issues
+- **Documentação**: Pasta `/docs`
+- **Logs**: Verificar logs dos serviços
+- **Monitoramento**: Grafana dashboards
 
 ---
 
-**Última atualização**: 2025-06-20
-**Versão**: 1.0.0
-**Status**: Em desenvolvimento ativo
+**Versão**: 1.0.0  
+**Última atualização**: 2024-01-15  
+**Licença**: MIT

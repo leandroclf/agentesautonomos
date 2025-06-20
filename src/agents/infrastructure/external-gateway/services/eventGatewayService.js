@@ -7,7 +7,7 @@ const AWS = require('aws-sdk');
 const Joi = require('joi');
 const { v4: uuidv4 } = require('uuid');
 const moment = require('moment');
-const Redis = require('ioredis');
+const { createClient } = require('redis');
 
 class EventGatewayService {
   constructor(config, logger, metrics) {
@@ -125,15 +125,10 @@ class EventGatewayService {
    */
   async initializeRedis() {
     try {
-      this.redis = new Redis({
-        host: this.config.redis.host,
-        port: this.config.redis.port,
+      this.redis = createClient({
+        url: `redis://${this.config.redis.host}:${this.config.redis.port}`,
         password: this.config.redis.password,
-        db: this.config.redis.db,
-        keyPrefix: this.config.redis.keyPrefix,
-        retryDelayOnFailover: this.config.redis.retryDelayOnFailover,
-        maxRetriesPerRequest: this.config.redis.maxRetriesPerRequest,
-        lazyConnect: true
+        database: this.config.redis.db
       });
 
       await this.redis.connect();

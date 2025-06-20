@@ -72,7 +72,7 @@ class PlanningAgent {
    */
   setupLogger() {
     return winston.createLogger({
-      level: config.shared.logging.level || 'info',
+      level: config.observability.logLevel || 'info',
       format: winston.format.combine(
         winston.format.timestamp(),
         winston.format.errors({ stack: true }),

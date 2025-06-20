@@ -4,7 +4,7 @@
  */
 
 const crypto = require('crypto');
-const Redis = require('ioredis');
+const { createClient } = require('redis');
 const { promisify } = require('util');
 
 class AuthService {
@@ -94,15 +94,10 @@ class AuthService {
    */
   async initializeRedis() {
     try {
-      this.redis = new Redis({
-        host: this.config.redis.host,
-        port: this.config.redis.port,
+      this.redis = createClient({
+        url: `redis://${this.config.redis.host}:${this.config.redis.port}`,
         password: this.config.redis.password,
-        db: this.config.redis.db,
-        keyPrefix: this.config.redis.keyPrefix + 'auth:',
-        retryDelayOnFailover: this.config.redis.retryDelayOnFailover,
-        maxRetriesPerRequest: this.config.redis.maxRetriesPerRequest,
-        lazyConnect: true
+        database: this.config.redis.db
       });
 
       await this.redis.connect();

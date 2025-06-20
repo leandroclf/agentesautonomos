@@ -67,8 +67,7 @@
     "@types/jest": "^29.5.4",
     "jest-environment-node": "^29.6.4",
     "nock": "^13.3.2",
-    "redis-memory-server": "^0.7.0",
-    "localstack": "^1.4.0"
+    "redis-memory-server": "^0.7.0"
   },
   "engines": {
     "node": ">=16.0.0",

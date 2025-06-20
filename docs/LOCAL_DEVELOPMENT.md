@@ -1,474 +1,264 @@
-# Ambiente de Desenvolvimento Local
+# Desenvolvimento Local - Agentes Autônomos
 
-Este guia explica como configurar e usar o ambiente de desenvolvimento local para o sistema de Agentes Autônomos.
+## Visão Geral
 
-## 📋 Pré-requisitos
+Este guia explica como configurar e executar o ambiente de desenvolvimento local dos Agentes Autônomos.
 
-### Software Necessário
+## Estrutura Simplificada
 
-1. **Docker Desktop**
-   - Windows: [Download Docker Desktop](https://www.docker.com/products/docker-desktop)
-   - Certifique-se de que o Docker está rodando
+### Ambiente Local (Desenvolvimento)
+- **LocalStack**: Simula serviços AWS (SQS, S3, DynamoDB)
+- **PostgreSQL**: Banco de dados local
+- **Redis**: Cache local
+- **Prometheus + Grafana**: Monitoramento
 
-2. **Node.js** (versão 16 ou superior)
-   - [Download Node.js](https://nodejs.org/)
+### Ambiente AWS (Produção)
+- **SQS Real**: Filas de mensagens AWS
+- **RDS PostgreSQL**: Banco de dados gerenciado
+- **ElastiCache Redis**: Cache gerenciado
+- **S3**: Armazenamento de objetos
 
-3. **AWS CLI** (para LocalStack)
-   ```bash
-   # Windows (usando Chocolatey)
-   choco install awscli
-   
-   # Ou baixar diretamente
-   # https://aws.amazon.com/cli/
-   ```
+## Pré-requisitos
 
-4. **Git**
-   - [Download Git](https://git-scm.com/)
+- Node.js 18+
+- Docker e Docker Compose
+- Git
 
-### Verificação dos Pré-requisitos
+## Configuração Rápida
 
+### 1. Clonar o Repositório
 ```bash
-# Verificar Docker
-docker --version
-docker ps
-
-# Verificar Node.js
-node --version
-npm --version
-
-# Verificar AWS CLI
-aws --version
+git clone <repository-url>
+cd agentesautonomos
 ```
 
-## 🚀 Configuração Inicial
-
-### 1. Instalação das Dependências
-
+### 2. Instalar Dependências
 ```bash
-# Instalar dependências do projeto
 npm install
 ```
 
-### 2. Configuração Automática do Ambiente
-
+### 3. Configurar Ambiente Local
 ```bash
-# Configurar ambiente completo automaticamente
-npm run setup:local
+# Copiar arquivo de configuração
+cp .env.development.local.example .env.development.local
+
+# Editar configurações se necessário
+# O arquivo já vem com configurações padrão para desenvolvimento
 ```
 
-Este comando irá:
-- Criar arquivo `docker-compose.yml`
-- Configurar scripts SQL de inicialização
-- Criar arquivo `.env.local` com configurações
-- Iniciar todos os serviços Docker
-- Criar filas SQS no LocalStack
-- Gerar collection do Postman
-- Criar script de inicialização rápida
-
-### 3. Configuração Manual (Alternativa)
-
-Se preferir configurar manualmente:
-
+### 4. Iniciar Ambiente Completo
 ```bash
-# Copiar arquivo de ambiente
-cp .env.local .env
-
-# Iniciar serviços
-npm run env:start
-
-# Aguardar serviços ficarem prontos
-npm run env:status
+# Script único que inicia tudo
+node dev/scripts/start-dev-environment.js
 ```
 
-## 🔧 Gerenciamento do Ambiente
+Este script irá:
+1. Iniciar serviços Docker (LocalStack, PostgreSQL, Redis, etc.)
+2. Aguardar serviços ficarem prontos
+3. Iniciar todos os agentes
+4. Mostrar URLs disponíveis
 
-### Scripts Disponíveis
+## Scripts Disponíveis
 
-| Comando | Descrição |
-|---------|----------|
-| `npm run env:start` | Iniciar todos os serviços |
-| `npm run env:stop` | Parar todos os serviços |
-| `npm run env:restart` | Reiniciar todos os serviços |
-| `npm run env:status` | Verificar status dos serviços |
-| `npm run env:logs` | Ver logs dos serviços |
-| `npm run env:clean` | Limpar dados de desenvolvimento |
-| `npm run env:reset` | Resetar ambiente completamente |
-| `npm run env:backup` | Fazer backup dos dados |
-
-### Gerenciamento Granular
-
+### Desenvolvimento Local
 ```bash
-# Iniciar serviço específico
-node scripts/local-env-manager.js start postgres
-node scripts/local-env-manager.js start redis
-node scripts/local-env-manager.js start localstack
+# Iniciar ambiente completo
+node dev/scripts/start-dev-environment.js
 
-# Ver logs de um serviço
-node scripts/local-env-manager.js logs localstack
-node scripts/local-env-manager.js logs-f postgres  # seguir logs em tempo real
+# Apenas configurar ambiente (sem iniciar agentes)
+node dev/scripts/setup-local-environment.js
 
-# Parar serviço específico
-node scripts/local-env-manager.js stop redis
+# Monitorar sistema
+node dev/scripts/monitor.js
+
+# Testar sistema
+node dev/scripts/test-system.js
 ```
 
-## 🌐 Serviços e Portas
-
-### Serviços de Infraestrutura
-
-| Serviço | Porta | URL | Credenciais |
-|---------|-------|-----|-------------|
-| **LocalStack** | 4566 | http://localhost:4566 | - |
-| **PostgreSQL** | 5432 | localhost:5432 | postgres/postgres123 |
-| **Redis** | 6379 | localhost:6379 | - |
-| **PgAdmin** | 8080 | http://localhost:8080 | admin@agentes.local/admin123 |
-| **Redis Commander** | 8081 | http://localhost:8081 | - |
-
-### Agentes
-
-| Agente | Porta | URL | Health Check |
-|--------|-------|-----|-------------|
-| **Event Agent** | 3003 | http://localhost:3003 | /health |
-| **Planning Agent** | 3004 | http://localhost:3004 | /health |
-| **Execution Agent** | 3005 | http://localhost:3005 | /health |
-| **Monitoring Agent** | 3006 | http://localhost:3006 | /health |
-| **Security Agent** | 3007 | http://localhost:3007 | /health |
-| **Policy Agent** | 3008 | http://localhost:3008 | /health |
-
-## 📊 Monitoramento e Logs
-
-### Verificar Status
-
+### Produção AWS
 ```bash
-# Status completo do ambiente
-npm run env:status
+# Deploy em produção
+node deploy/aws/deploy-production.js
 
-# Status dos agentes
-npm run status
+# Configurar recursos AWS
+node deploy/aws/setup.js
+
+# Verificar recursos AWS
+node deploy/aws/verify.js
 ```
 
-### Visualizar Logs
+## Arquivos de Configuração
 
-```bash
-# Logs de todos os serviços
-docker-compose logs
+### Desenvolvimento Local
+- `.env.development.local` - Configurações locais com Docker
+- `docker-compose.dev.yml` - Serviços para desenvolvimento
 
-# Logs de um serviço específico
-docker-compose logs localstack
-docker-compose logs postgres
+### Produção AWS
+- `.env.production` - Configurações de produção
+- `docker-compose.aws.yml` - Serviços para produção
 
-# Seguir logs em tempo real
-docker-compose logs -f redis
+## URLs dos Serviços
+
+### Agentes (Desenvolvimento)
+- External Gateway: http://localhost:3001
+- Interface Agent: http://localhost:3002
+- Event Agent: http://localhost:3003
+- Planning Agent: http://localhost:3004
+- Execution Agent: http://localhost:3005
+- Monitoring Agent: http://localhost:3006
+- Learning Agent: http://localhost:3007
+- Coordination Agent: http://localhost:3008
+- Resource Agent: http://localhost:3009
+- Security Agent: http://localhost:3010
+- Context Agent: http://localhost:3011
+
+### Ferramentas de Administração
+- **PgAdmin**: http://localhost:8080
+  - Email: admin@agentes.local
+  - Senha: admin123
+- **Redis Commander**: http://localhost:8081
+- **Grafana**: http://localhost:3000
+  - Usuário: admin
+  - Senha: admin123
+- **Prometheus**: http://localhost:9090
+
+## Estrutura de Pastas
+
+```
+├── dev/
+│   └── scripts/
+│       ├── start-dev-environment.js    # Script principal para desenvolvimento
+│       ├── setup-local-environment.js  # Configuração do ambiente
+│       ├── monitor.js                  # Monitoramento
+│       └── test-system.js             # Testes
+├── deploy/
+│   └── aws/
+│       ├── deploy-production.js       # Deploy em produção
+│       ├── setup.js                   # Configuração AWS
+│       └── verify.js                  # Verificação AWS
+├── config/
+│   ├── prometheus.yml                 # Configuração Prometheus
+│   └── grafana/                       # Configurações Grafana
+├── docker-compose.dev.yml             # Docker para desenvolvimento
+├── docker-compose.aws.yml             # Docker para produção
+├── .env.development.local             # Configurações locais
+└── .env.production                    # Configurações produção
 ```
 
-### Interfaces Web
-
-1. **PgAdmin** (http://localhost:8080)
-   - Gerenciar banco PostgreSQL
-   - Login: admin@agentes.local / admin123
-
-2. **Redis Commander** (http://localhost:8081)
-   - Visualizar dados do Redis
-   - Monitorar cache e sessões
-
-3. **LocalStack Dashboard** (http://localhost:4566)
-   - Status dos serviços AWS simulados
-   - Gerenciar filas SQS
-
-## 🧪 Testes e Desenvolvimento
-
-### Iniciar Agentes
-
-```bash
-# Iniciar todos os agentes
-npm run start:all
-
-# Iniciar agente específico
-npm run start:event
-npm run start:planning
-npm run start:execution
-```
-
-### Testes com Postman
-
-1. Importar collection: `postman/agentes-autonomos-local.postman_collection.json`
-2. Configurar variáveis de ambiente no Postman
-3. Executar requests de teste
-
-### Testes com cURL
-
-```bash
-# Health check dos agentes
-curl http://localhost:3003/health
-curl http://localhost:3004/health
-curl http://localhost:3005/health
-
-# Criar evento
-curl -X POST http://localhost:3003/api/events \
-  -H "Content-Type: application/json" \
-  -d '{
-    "eventType": "user_action",
-    "source": "test",
-    "data": {
-      "action": "test_action",
-      "userId": "test123"
-    }
-  }'
-
-# Listar eventos
-curl http://localhost:3003/api/events
-```
-
-## 🗄️ Banco de Dados
-
-### Estrutura do Banco
-
-O banco PostgreSQL é inicializado automaticamente com:
-
-- **Schema**: `agentes`
-- **Tabelas**:
-  - `events` - Eventos do sistema
-  - `plans` - Planos de execução
-  - `executions` - Execuções realizadas
-  - `metrics` - Métricas dos agentes
-  - `policies` - Políticas do sistema
-  - `policy_violations` - Violações de política
-
-### Conectar ao Banco
-
-```bash
-# Via Docker
-docker exec -it agentes-postgres psql -U postgres agentes_autonomos
-
-# Via PgAdmin (http://localhost:8080)
-# Host: postgres
-# Port: 5432
-# Database: agentes_autonomos
-# Username: postgres
-# Password: postgres123
-```
-
-### Queries Úteis
-
-```sql
--- Listar eventos recentes
-SELECT * FROM agentes.events ORDER BY created_at DESC LIMIT 10;
-
--- Verificar status dos planos
-SELECT status, COUNT(*) FROM agentes.plans GROUP BY status;
-
--- Métricas por agente
-SELECT agent_id, COUNT(*) as total_metrics 
-FROM agentes.metrics 
-GROUP BY agent_id;
-```
-
-## 📋 Filas SQS (LocalStack)
-
-### Filas Criadas Automaticamente
-
-**Filas Principais:**
-- `event-agent-queue-dev`
-- `planning-agent-queue-dev`
-- `execution-agent-queue-dev`
-- `monitoring-agent-queue-dev`
-- `security-agent-queue-dev`
-- `policy-agent-queue-dev`
-
-**Dead Letter Queues (DLQ):**
-- `event-agent-queue-dev-dlq`
-- `planning-agent-queue-dev-dlq`
-- `execution-agent-queue-dev-dlq`
-- `monitoring-agent-queue-dev-dlq`
-- `security-agent-queue-dev-dlq`
-- `policy-agent-queue-dev-dlq`
-
-### Comandos AWS CLI para LocalStack
-
-```bash
-# Listar filas
-aws --endpoint-url=http://localhost:4566 sqs list-queues --region us-east-1
-
-# Enviar mensagem
-aws --endpoint-url=http://localhost:4566 sqs send-message \
-  --queue-url http://localhost:4566/000000000000/event-agent-queue-dev \
-  --message-body '{"test": "message"}' \
-  --region us-east-1
-
-# Receber mensagens
-aws --endpoint-url=http://localhost:4566 sqs receive-message \
-  --queue-url http://localhost:4566/000000000000/event-agent-queue-dev \
-  --region us-east-1
-```
-
-## 🔧 Solução de Problemas
+## Troubleshooting
 
 ### Problemas Comuns
 
-#### 1. Docker não está rodando
+#### 1. Porta já em uso
 ```bash
-# Verificar status do Docker
-docker ps
+# Verificar processos usando portas
+netstat -ano | findstr :3001
 
-# Se não funcionar, iniciar Docker Desktop
+# Parar processo específico
+taskkill /PID <PID> /F
 ```
 
-#### 2. Portas em uso
+#### 2. Docker não inicia
 ```bash
-# Verificar quais portas estão em uso
-netstat -an | findstr :4566
-netstat -an | findstr :5432
+# Verificar status do Docker
+docker info
 
-# Parar serviços conflitantes
-npm run env:stop
+# Reiniciar Docker Desktop
+# Ou reiniciar serviço Docker no Linux
+sudo systemctl restart docker
 ```
 
 #### 3. Serviços não ficam prontos
 ```bash
-# Verificar logs dos serviços
-npm run env:logs localstack
-npm run env:logs postgres
+# Verificar logs dos containers
+docker-compose -f docker-compose.dev.yml logs
 
-# Reiniciar serviços
-npm run env:restart
+# Verificar status dos containers
+docker-compose -f docker-compose.dev.yml ps
 ```
 
-#### 4. Agentes não conseguem conectar
+#### 4. Erro de conexão com Redis/PostgreSQL
 ```bash
-# Verificar se .env está configurado corretamente
-cat .env
+# Verificar se serviços estão rodando
+docker-compose -f docker-compose.dev.yml ps
 
-# Verificar se LocalStack está rodando
-curl http://localhost:4566/health
-
-# Verificar filas SQS
-aws --endpoint-url=http://localhost:4566 sqs list-queues --region us-east-1
+# Reiniciar serviços específicos
+docker-compose -f docker-compose.dev.yml restart redis postgres
 ```
 
-### Logs de Debug
+### Logs e Debugging
 
 ```bash
-# Habilitar logs detalhados
-export LOG_LEVEL=debug
+# Logs de todos os serviços
+docker-compose -f docker-compose.dev.yml logs -f
 
-# Ou no arquivo .env
-LOG_LEVEL=debug
+# Logs de um serviço específico
+docker-compose -f docker-compose.dev.yml logs -f redis
+
+# Logs dos agentes
+# Os logs aparecem no terminal onde o script foi executado
 ```
 
-### Reset Completo
+### Limpeza do Ambiente
 
 ```bash
-# Se tudo falhar, reset completo
-npm run env:reset
+# Parar todos os serviços
+docker-compose -f docker-compose.dev.yml down
 
-# Ou manualmente
-docker-compose down -v
+# Remover volumes (dados serão perdidos)
+docker-compose -f docker-compose.dev.yml down -v
+
+# Limpar imagens não utilizadas
 docker system prune -f
-npm run setup:local
 ```
 
-## 💾 Backup e Restore
+## Migração de Dados
 
-### Fazer Backup
-
-```bash
-# Backup automático
-npm run env:backup
-
-# Backup será salvo em: backups/YYYY-MM-DDTHH-mm-ss/
-```
-
-### Restaurar Backup
-
-```bash
-# Restaurar backup específico
-node scripts/local-env-manager.js restore backups/2024-01-15T10-30-00
-```
-
-### Backup Manual
-
+### Backup Local
 ```bash
 # Backup PostgreSQL
 docker exec agentes-postgres pg_dump -U postgres agentes_autonomos > backup.sql
 
 # Backup Redis
-docker exec agentes-redis redis-cli BGSAVE
-docker cp agentes-redis:/data/dump.rdb ./redis-backup.rdb
+docker exec agentes-redis redis-cli --rdb /data/backup.rdb
 ```
 
-## 🔄 Fluxo de Desenvolvimento
-
-### 1. Iniciar Dia de Trabalho
-
+### Restore Local
 ```bash
-# Verificar status
-npm run env:status
+# Restore PostgreSQL
+docker exec -i agentes-postgres psql -U postgres agentes_autonomos < backup.sql
 
-# Iniciar se necessário
-npm run env:start
-
-# Iniciar agentes
-npm run start:all
+# Restore Redis
+docker cp backup.rdb agentes-redis:/data/
+docker exec agentes-redis redis-cli DEBUG RELOAD
 ```
 
-### 2. Durante o Desenvolvimento
+## Performance e Monitoramento
 
-```bash
-# Monitorar logs
-npm run env:logs
+### Métricas Disponíveis
+- CPU e memória dos agentes
+- Latência das requisições
+- Throughput das filas SQS
+- Conexões de banco de dados
+- Cache hit/miss ratio
 
-# Verificar saúde dos serviços
-npm run env:status
+### Dashboards Grafana
+- **System Overview**: Visão geral do sistema
+- **Agent Performance**: Performance individual dos agentes
+- **Queue Monitoring**: Monitoramento das filas
+- **Database Metrics**: Métricas do banco de dados
 
-# Reiniciar agente específico
-npm run restart:event
-```
+## Próximos Passos
 
-### 3. Finalizar Dia de Trabalho
+1. **Desenvolvimento**: Use o ambiente local para desenvolvimento
+2. **Testes**: Execute testes de integração
+3. **Deploy**: Configure produção AWS quando pronto
+4. **Monitoramento**: Configure alertas no Grafana
 
-```bash
-# Parar agentes
-npm run stop:all
+## Suporte
 
-# Fazer backup (opcional)
-npm run env:backup
-
-# Parar serviços (opcional)
-npm run env:stop
-```
-
-## 📚 Recursos Adicionais
-
-### Documentação
-
-- [README Principal](./README.md)
-- [Plano de Implementação](./PLANO_SEQUENCIAL_IMPLEMENTACAO.md)
-- [Docker Compose Reference](https://docs.docker.com/compose/)
-- [LocalStack Documentation](https://docs.localstack.cloud/)
-
-### Ferramentas Úteis
-
-- **Docker Desktop**: Interface gráfica para Docker
-- **Postman**: Testes de API
-- **DBeaver**: Cliente universal de banco de dados
-- **Redis Desktop Manager**: Cliente gráfico para Redis
-
-### Scripts de Automação
-
-- `scripts/setup-local-environment.js` - Configuração inicial
-- `scripts/local-env-manager.js` - Gerenciamento do ambiente
-- `quick-start.sh` - Script bash para inicialização rápida
-
-## 🆘 Suporte
-
-Se encontrar problemas:
-
-1. Verificar logs dos serviços
-2. Consultar seção de solução de problemas
-3. Fazer reset do ambiente
-4. Verificar documentação do Docker/LocalStack
-5. Criar issue no repositório do projeto
-
----
-
-**Última atualização**: 2024-01-15
-**Versão**: 1.0.0
+Para problemas ou dúvidas:
+1. Verifique os logs dos serviços
+2. Consulte a seção de troubleshooting
+3. Verifique a documentação específica de cada agente
+4. Abra uma issue no repositório
