@@ -24,7 +24,38 @@ Este guia explica como configurar e executar o ambiente de desenvolvimento local
 - Docker e Docker Compose
 - Git
 
-## Configuração Rápida
+## 🚀 Configuração Rápida (Novo Sistema)
+
+> ⚡ **Configuração Automatizada**: Agora você pode configurar todo o ambiente com um único comando!
+
+### Configuração Completa Automatizada
+```bash
+# Clone o repositório
+git clone <repository-url>
+cd agentesautonomos
+
+# Instale dependências
+npm install
+
+# Configure e inicie todo o ambiente automaticamente
+npm run dev
+```
+
+### Comandos Alternativos
+```bash
+# Configuração rápida (se Docker já estiver rodando)
+npm run dev:quick
+
+# Apenas testes de eventos
+npm run dev:test
+
+# Limpeza do ambiente
+npm run dev:clean
+```
+
+> 📚 **Documentação Detalhada**: Para mais informações, consulte o [Guia de Desenvolvimento Completo](./GUIA_DESENVOLVIMENTO_COMPLETO.md).
+
+## Configuração Manual (Método Antigo)
 
 ### 1. Clonar o Repositório
 ```bash
@@ -37,7 +68,7 @@ cd agentesautonomos
 npm install
 ```
 
-### 3. Configurar Ambiente Local
+### 3. Configurar Ambiente Local (Manual)
 ```bash
 # Copiar arquivo de configuração
 cp .env.development.local.example .env.development.local

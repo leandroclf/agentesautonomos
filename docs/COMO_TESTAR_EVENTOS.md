@@ -1,4 +1,23 @@
-# Como Testar Eventos no Sistema de Agentes Autônomos
+# Como Testar Eventos no Sistema de Agentes
+
+## 🚀 Configuração Rápida
+
+**Para iniciar o ambiente completo:**
+```bash
+npm run dev
+```
+
+**Para configuração rápida (se Docker já estiver rodando):**
+```bash
+npm run dev:quick
+```
+
+**Para executar apenas testes de eventos:**
+```bash
+npm run dev:test
+```
+
+> 📚 **Documentação Completa**: Consulte o [Guia de Desenvolvimento Completo](./GUIA_DESENVOLVIMENTO_COMPLETO.md) para mais detalhes.
 
 ## Status da Aplicação
 

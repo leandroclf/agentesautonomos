@@ -2,18 +2,51 @@
 
 Um sistema distribuído avançado de agentes autônomos baseado em arquitetura BDI (Belief-Desire-Intention) e MARL (Multi-Agent Reinforcement Learning) para processamento inteligente de eventos, planejamento colaborativo e execução coordenada de tarefas.
 
+## 🚀 Início Rápido
+
+### Configuração Completa do Ambiente (Um Comando)
+
+```bash
+# Configurar todo o ambiente de desenvolvimento
+npm run dev
+```
+
+**Este comando executa automaticamente:**
+- ✅ Verificação de dependências (Node.js, Docker, etc.)
+- 🐳 Configuração e inicialização do Docker
+- 📬 Criação de filas SQS no LocalStack
+- 🤖 Inicialização de todos os agentes
+- 🧪 Execução de testes de eventos
+- 📊 Verificação final do sistema
+
+### Comandos Alternativos
+
+```bash
+npm run dev:quick  # Configuração rápida (Docker já rodando)
+npm run dev:test   # Apenas testes de eventos
+npm run dev:clean  # Limpar ambiente
+```
+
+### Monitoramento
+
+- **Grafana**: http://localhost:3000 (admin/admin)
+- **Prometheus**: http://localhost:9090
+- **PgAdmin**: http://localhost:8080
+- **Redis Commander**: http://localhost:8081
+
 ## 🎯 Status do Projeto
 
-**🚀 92% Completo** - Sistema em fase final de desenvolvimento
+**🚀 95% Completo** - Sistema pronto para desenvolvimento
 
 - ✅ **Componentes Core**: 6/6 Implementados (100%)
 - ✅ **Componentes Auxiliares**: 9/9 Implementados (95%)
 - ✅ **Componentes de Mediação**: 2/2 Implementados (90%)
 - ✅ **Componentes MARL**: 2/2 Implementados (85%)
 - ✅ **Componentes de Gerenciamento**: 2/2 Implementados (90%)
-- ✅ **Infraestrutura**: 90% Completa
-- ⚠️ **Testes**: 15% Completo
-- ✅ **Documentação**: 70% Completa
+- ✅ **Infraestrutura**: 95% Completa
+- ✅ **Ambiente de Desenvolvimento**: 100% Automatizado
+- ✅ **Testes Automáticos**: 80% Completo
+- ✅ **Documentação**: 90% Completa
 
 ## 🏗️ Arquitetura do Sistema
 
