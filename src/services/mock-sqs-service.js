@@ -274,6 +274,13 @@ class MockSQSService extends EventEmitter {
       throw error;
     }
   }
+
+  /**
+   * Método close() para compatibilidade com SQSService real
+   */
+  async close() {
+    return await this.shutdown();
+  }
 }
 
 module.exports = MockSQSService;
