@@ -1,0 +1,28 @@
+{
+  "timestamp": "2025-06-20T00:23:16.772Z",
+  "summary": {
+    "totalAgents": 1,
+    "agentsWithHandlers": 1,
+    "totalMissingHandlers": 0,
+    "totalRecommendations": 0
+  },
+  "details": [
+    {
+      "agent": "interface-agent",
+      "path": "C:\\Users\\leand\\IdeaProjects\\yukz\\agentesautonomos\\src\\agents\\core\\interface-agent",
+      "hasHandlersDir": true,
+      "hasServicesDir": true,
+      "handlers": [
+        "eventHandler",
+        "responseHandler",
+        "websocketHandler"
+      ],
+      "services": [
+        "interfaceService"
+      ],
+      "missingHandlers": [],
+      "recommendations": []
+    }
+  ],
+  "priorityActions": []
+}

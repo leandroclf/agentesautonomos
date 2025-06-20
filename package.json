@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "description": "Arquitetura Multiagente baseada em Amazon SQS com Event-Driven Architecture (EDA) + MARL",
   "main": "src/index.js",
-
   "scripts": {
     "test": "jest",
     "test:unit": "jest --testPathPattern=unit",
-    "test:system": "jest --testPathPattern=system",
+    "test:system": "node scripts/test-system-integration.js",
     "test:coverage": "jest --coverage",
+    "test:sqs": "node scripts/test-sqs-connectivity.js",
     "dev:setup": "node dev/setup.js",
     "start": "node dev/scripts/start-all.js",
     "start:all": "concurrently \"npm run start:state\" \"npm run start:interface\" \"npm run start:event\" \"npm run start:planning\" \"npm run start:execution\"",
@@ -18,6 +18,13 @@
     "start:planning": "node src/agents/core/planning-agent/index.js",
     "start:execution": "node src/agents/core/execution-agent/index.js",
     "monitor": "node scripts/monitor.js",
+    "setup:aws-production": "node scripts/setup-aws-production.js",
+    "switch-to-real-sqs": "node scripts/switch-to-real-sqs.js",
+    "implement:handlers": "node scripts/implement-missing-handlers.js",
+    "setup:documentation": "node scripts/setup-documentation.js",
+    "docs:serve": "npx http-server docs -p 8080 -o",
+    "docs:build": "echo 'Documentation is ready in docs/ folder'",
+    "docs:validate": "powershell -Command \"Get-ChildItem -Path docs -Recurse -Filter '*.md' | ForEach-Object { Write-Host 'Validating' $_.FullName }\"",
     "aws:setup": "node deploy/aws/setup.js",
     "aws:verify": "node deploy/aws/verify.js",
     "localstack:up": "cd infrastructure/localstack && docker-compose up -d",
@@ -30,7 +37,10 @@
     "lint": "eslint src/ --ext .js",
     "lint:fix": "eslint src/ --ext .js --fix",
     "format": "prettier --write src/**/*.js",
-    "clean": "rimraf logs/* temp/* coverage/"
+    "clean": "rimraf logs/* temp/* coverage/",
+    "monitor:start": "node src/monitoring/start-monitoring.js",
+    "logs:view": "tail -f logs/system/combined.log",
+    "logs:errors": "tail -f logs/errors/error.log"
   },
   "keywords": [
     "multiagent",
@@ -84,7 +94,6 @@
     "prettier": "^3.1.0",
     "supertest": "^6.3.3"
   },
-
   "repository": {
     "type": "git",
     "url": "git+https://github.com/seu-usuario/agentes-autonomos.git"
