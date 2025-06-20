@@ -31,8 +31,54 @@ info:
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: http://localhost:8080
-    description: Servidor de desenvolvimento
+  - url: "{{baseUrl}}"
+    description: Servidor configurável via variáveis
+    variables:
+      baseUrl:
+        default: http://localhost:3000
+        description: URL base do servidor
+        enum:
+          - http://localhost:3000
+          - http://localhost:3001
+          - http://localhost:3002
+          - http://localhost:3003
+          - http://localhost:3004
+          - http://localhost:3005
+          - http://localhost:3006
+          - http://localhost:3007
+          - http://localhost:3008
+          - http://localhost:3009
+          - http://localhost:3010
+          - http://localhost:3011
+          - http://localhost:3012
+  - url: http://localhost:3000
+    description: Interface Agent (Desenvolvimento)
+  - url: http://localhost:3001
+    description: Event Agent / Monitoring Agent (Desenvolvimento)
+  - url: http://localhost:3002
+    description: Planning Agent (Desenvolvimento)
+  - url: http://localhost:3003
+    description: Execution Agent (Desenvolvimento)
+  - url: http://localhost:3004
+    description: Planning Agent (Porta Alternativa)
+  - url: http://localhost:3005
+    description: Execution Agent (Porta Alternativa)
+  - url: http://localhost:3006
+    description: ACL Middleware Agent (Desenvolvimento)
+  - url: http://localhost:3007
+    description: Security Agent / External Gateway (Desenvolvimento)
+  - url: http://localhost:3008
+    description: Monitoring Agent (Porta Alternativa)
+  - url: http://localhost:3009
+    description: Policy Agent (Desenvolvimento)
+  - url: http://localhost:3010
+    description: MARL Agent / Orchestrator Agent (Desenvolvimento)
+  - url: http://localhost:3011
+    description: Coordination Agent (Desenvolvimento)
+  - url: http://localhost:3012
+    description: Mediator Agent (Desenvolvimento)
+  - url: http://localhost:9090
+    description: Prometheus / Metrics Server (Desenvolvimento)
   - url: https://api.agentesautonomos.com
     description: Servidor de produção
 
