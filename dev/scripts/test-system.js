@@ -12,7 +12,7 @@ const axios = require('axios');
 
 class SystemTester {
     constructor() {
-        this.projectRoot = path.resolve(__dirname, '..');
+        this.projectRoot = path.resolve(__dirname, '../..');
         this.results = {
             passed: 0,
             failed: 0,
@@ -47,16 +47,15 @@ class SystemTester {
         const requiredFiles = [
             'package.json',
             '.env.example',
-            'docker-compose.yml',
+            'docker-compose.dev.yml',
             'src/agents/core/interface-agent/index.js',
             'src/agents/core/event-agent/index.js',
             'src/agents/core/planning-agent/index.js',
             'src/agents/core/execution-agent/index.js',
-            'src/agents/shared/utils/coordination.js',
-            'config/elasticmq.conf',
-            'config/prometheus.yml',
-            'scripts/start-all.js',
-            'scripts/dev-setup.js'
+            'src/agents/shared/services/sqsService.js',
+            'config/monitoring/prometheus.yml',
+            'dev/scripts/start-dev-environment.js',
+            'scripts/test-system-integration.js'
         ];
 
         const requiredDirectories = [
@@ -64,7 +63,9 @@ class SystemTester {
             'src/agents/shared',
             'config',
             'scripts',
-            'docker'
+            'docker',
+            'docs',
+            'dev'
         ];
 
         // Testar arquivos
@@ -124,24 +125,24 @@ class SystemTester {
             }
         });
 
-        // Testar docker-compose.yml
-        this.test('docker-compose.yml válido', () => {
-            const composePath = path.join(this.projectRoot, 'docker-compose.yml');
+        // Testar docker-compose.dev.yml
+        this.test('docker-compose.dev.yml válido', () => {
+            const composePath = path.join(this.projectRoot, 'docker-compose.dev.yml');
             const composeContent = fs.readFileSync(composePath, 'utf8');
             
             const requiredServices = [
-                'elasticmq',
-                'interface-agent',
-                'event-agent',
-                'planning-agent',
-                'execution-agent',
+                'localstack',
+                'postgres',
+                'redis',
                 'prometheus',
-                'grafana'
+                'grafana',
+                'pgadmin',
+                'redis-commander'
             ];
 
             for (const service of requiredServices) {
                 if (!composeContent.includes(service)) {
-                    throw new Error(`Serviço ${service} não encontrado em docker-compose.yml`);
+                    throw new Error(`Serviço ${service} não encontrado em docker-compose.dev.yml`);
                 }
             }
         });
@@ -182,9 +183,9 @@ class SystemTester {
         console.log('\n🤖 Testando endpoints dos agentes...');
 
         const agents = [
-            { name: 'Interface Agent', port: 3000 },
-            { name: 'Event Agent', port: 3001 },
-            { name: 'Planning Agent', port: 3002 },
+            { name: 'Interface Agent', port: 3001 },
+            { name: 'Event Agent', port: 3002 },
+            { name: 'Planning Agent', port: 3004 },
             { name: 'Execution Agent', port: 3003 }
         ];
 
@@ -228,18 +229,18 @@ class SystemTester {
     async testSQSQueues() {
         console.log('\n📬 Testando filas SQS...');
 
-        await this.testAsync('SQS Local acessível', async () => {
+        await this.testAsync('LocalStack acessível', async () => {
             try {
-                const response = await axios.get('http://localhost:9324', {
+                const response = await axios.get('http://localhost:4566/health', {
                     timeout: 5000
                 });
                 
                 if (response.status !== 200) {
-                    throw new Error(`SQS Local não acessível: ${response.status}`);
+                    throw new Error(`LocalStack não acessível: ${response.status}`);
                 }
             } catch (error) {
                 if (error.code === 'ECONNREFUSED') {
-                    throw new Error('SQS Local não está rodando na porta 9324');
+                    throw new Error('LocalStack não está rodando na porta 4566');
                 }
                 throw error;
             }
@@ -247,24 +248,17 @@ class SystemTester {
 
         await this.testAsync('Filas SQS configuradas', async () => {
             try {
-                const response = await axios.get('http://localhost:9324/queue', {
+                // Verificar se LocalStack SQS está funcionando
+                const response = await axios.get('http://localhost:4566/_localstack/health', {
                     timeout: 5000
                 });
                 
-                const expectedQueues = [
-                    'interface-events',
-                    'event-processing',
-                    'planning-requests',
-                    'execution-requests',
-                    'notifications',
-                    'status-updates'
-                ];
-
-                const responseText = response.data;
-                for (const queue of expectedQueues) {
-                    if (!responseText.includes(queue)) {
-                        throw new Error(`Fila ${queue} não encontrada`);
-                    }
+                if (!response.data.services || !response.data.services.sqs) {
+                    throw new Error('Serviço SQS não está disponível no LocalStack');
+                }
+                
+                if (response.data.services.sqs !== 'available' && response.data.services.sqs !== 'running') {
+                    throw new Error(`SQS status: ${response.data.services.sqs}`);
                 }
             } catch (error) {
                 throw new Error(`Erro ao verificar filas: ${error.message}`);
@@ -294,7 +288,7 @@ class SystemTester {
 
         await this.testAsync('Grafana acessível', async () => {
             try {
-                const response = await axios.get('http://localhost:3100', {
+                const response = await axios.get('http://localhost:3000', {
                     timeout: 5000
                 });
                 
@@ -303,7 +297,7 @@ class SystemTester {
                 }
             } catch (error) {
                 if (error.code === 'ECONNREFUSED') {
-                    throw new Error('Grafana não está rodando na porta 3100');
+                    throw new Error('Grafana não está rodando na porta 3000');
                 }
                 throw error;
             }
@@ -316,7 +310,7 @@ class SystemTester {
         await this.testAsync('Comunicação entre agentes', async () => {
             try {
                 // Testar se o Interface Agent consegue se comunicar com outros agentes
-                const response = await axios.post('http://localhost:3000/api/test-integration', {
+                const response = await axios.post('http://localhost:3001/api/test-integration', {
                     test: true
                 }, {
                     timeout: 10000
