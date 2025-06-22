@@ -1,94 +1,178 @@
-# Documentação da API
+# 🔌 API - Sistema de Agentes Autônomos
 
-Este documento fornece a especificação completa da API do sistema de agentes autônomos.
+Este documento fornece a especificação completa da API REST do sistema de agentes autônomos, incluindo endpoints, autenticação, formatos de dados e exemplos de uso.
 
 ## 📋 Índice
 
 - [Visão Geral](#visão-geral)
 - [Autenticação](#autenticação)
+- [Endpoints por Categoria](#endpoints-por-categoria)
 - [Códigos de Status](#códigos-de-status)
-- [Formato de Resposta](#formato-de-resposta)
-- [Rate Limiting](#rate-limiting)
-- [Interface Agent](#interface-agent)
-- [Event Agent](#event-agent)
-- [Planning Agent](#planning-agent)
-- [Execution Agent](#execution-agent)
-- [Webhooks](#webhooks)
+- [Formatos de Resposta](#formatos-de-resposta)
+- [Modelos de Dados](#modelos-de-dados)
 - [Exemplos de Uso](#exemplos-de-uso)
-- [SDKs e Bibliotecas](#sdks-e-bibliotecas)
+- [Rate Limiting](#rate-limiting)
+- [Versionamento](#versionamento)
 
 ## 🌐 Visão Geral
 
-A API do sistema de agentes autônomos é baseada em REST e utiliza JSON para comunicação. Cada agente expõe endpoints específicos para suas funcionalidades.
+### Características Gerais
+- **Protocolo**: REST sobre HTTP/HTTPS
+- **Formato**: JSON
+- **Autenticação**: JWT Bearer Token
+- **Rate Limiting**: 1000 requisições/minuto por usuário
+- **Versionamento**: Via header `API-Version`
+- **CORS**: Configurado para desenvolvimento
+- **Compressão**: Gzip habilitado
 
-### Base URLs
+### URLs Base
+- **Desenvolvimento**: `http://localhost:3000`
+- **Produção**: `https://api.agentesautonomos.com`
 
-| Ambiente | URL Base |
-|----------|----------|
-| Desenvolvimento | `http://localhost:3000` |
-| Staging | `https://staging-api.example.com` |
-| Produção | `https://api.example.com` |
-
-### Versioning
-
-A API utiliza versionamento via header:
-```
-API-Version: v1
-```
-
-### Content-Type
-
-Todos os endpoints esperam e retornam:
-```
+### Headers Padrão
+```http
 Content-Type: application/json
+Authorization: Bearer <jwt-token>
+API-Version: v1
+X-Request-ID: <uuid>
+User-Agent: <client-info>
 ```
 
 ## 🔐 Autenticação
 
-### JWT Bearer Token
-
-```http
-Authorization: Bearer <jwt-token>
-```
-
 ### Obter Token
 
-```http
-POST /auth/login
-Content-Type: application/json
+**POST** `/auth/login`
 
+```json
+// Request
 {
   "username": "user@example.com",
   "password": "password123"
 }
-```
 
-**Resposta:**
-```json
+// Response
 {
   "success": true,
   "data": {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "expiresIn": 3600,
+    "refreshToken": "refresh-token-here",
     "user": {
       "id": "user-123",
       "email": "user@example.com",
-      "role": "admin"
+      "role": "admin",
+      "permissions": ["read", "write", "admin"]
     }
   }
 }
 ```
 
-### Refresh Token
+### Renovar Token
 
-```http
-POST /auth/refresh
-Content-Type: application/json
+**POST** `/auth/refresh`
 
+```json
+// Request
 {
   "refreshToken": "refresh-token-here"
 }
+
+// Response
+{
+  "success": true,
+  "data": {
+    "token": "new-jwt-token",
+    "expiresIn": 3600
+  }
+}
 ```
+
+### Logout
+
+**POST** `/auth/logout`
+
+```json
+// Request
+{
+  "token": "jwt-token-to-invalidate"
+}
+
+// Response
+{
+  "success": true,
+  "message": "Logout realizado com sucesso"
+}
+```
+
+## 📡 Endpoints por Categoria
+
+### Interface Agent
+- `GET /health` - Verificar saúde do sistema
+- `GET /metrics` - Obter métricas do sistema
+- `POST /sessions` - Criar nova sessão
+- `GET /sessions` - Listar sessões
+- `GET /sessions/{sessionId}` - Obter sessão específica
+- `PUT /sessions/{sessionId}` - Atualizar sessão
+- `DELETE /sessions/{sessionId}` - Deletar sessão
+
+### Event Agent
+- `POST /agents/event/events` - Criar evento
+- `GET /agents/event/events` - Listar eventos
+- `GET /agents/event/events/{eventId}` - Obter evento específico
+- `PUT /agents/event/events/{eventId}` - Atualizar evento
+- `DELETE /agents/event/events/{eventId}` - Deletar evento
+- `POST /agents/event/events/{eventId}/process` - Processar evento
+- `GET /agents/event/events/{eventId}/status` - Status do processamento
+
+### Planning Agent
+- `POST /agents/planning/plans` - Criar plano
+- `GET /agents/planning/plans` - Listar planos
+- `GET /agents/planning/plans/{planId}` - Obter plano específico
+- `PUT /agents/planning/plans/{planId}` - Atualizar plano
+- `DELETE /agents/planning/plans/{planId}` - Deletar plano
+- `POST /agents/planning/plans/{planId}/execute` - Executar plano
+- `GET /agents/planning/plans/{planId}/status` - Status da execução
+
+### Execution Agent
+- `POST /agents/execution/tasks` - Criar tarefa
+- `GET /agents/execution/tasks` - Listar tarefas
+- `GET /agents/execution/tasks/{taskId}` - Obter tarefa específica
+- `PUT /agents/execution/tasks/{taskId}` - Atualizar tarefa
+- `DELETE /agents/execution/tasks/{taskId}` - Cancelar tarefa
+- `POST /agents/execution/tasks/{taskId}/start` - Iniciar execução
+- `POST /agents/execution/tasks/{taskId}/pause` - Pausar execução
+- `POST /agents/execution/tasks/{taskId}/resume` - Retomar execução
+- `POST /agents/execution/tasks/{taskId}/stop` - Parar execução
+
+### Mediator Agent
+- `POST /agents/mediator/mediate` - Mediar comunicação
+- `GET /agents/mediator/sessions` - Listar sessões de mediação
+- `GET /agents/mediator/sessions/{sessionId}` - Obter sessão de mediação
+- `POST /agents/mediator/sessions/{sessionId}/resolve` - Resolver conflito
+
+### Orchestrator Agent
+- `POST /agents/orchestrator/workflows` - Criar workflow
+- `GET /agents/orchestrator/workflows` - Listar workflows
+- `GET /agents/orchestrator/workflows/{workflowId}` - Obter workflow específico
+- `PUT /agents/orchestrator/workflows/{workflowId}` - Atualizar workflow
+- `DELETE /agents/orchestrator/workflows/{workflowId}` - Deletar workflow
+- `POST /agents/orchestrator/workflows/{workflowId}/execute` - Executar workflow
+
+### Monitoramento
+- `GET /monitoring/health` - Verificar saúde do sistema
+- `GET /monitoring/metrics` - Obter métricas
+- `GET /monitoring/agents/{agentId}/status` - Status de agente específico
+- `GET /monitoring/agents/{agentId}/metrics` - Métricas de agente específico
+- `GET /monitoring/system/performance` - Performance do sistema
+
+### Schema Registry
+- `POST /schema-registry/schemas` - Registrar schema
+- `GET /schema-registry/schemas` - Listar schemas
+- `GET /schema-registry/schemas/{schemaId}` - Obter schema específico
+- `PUT /schema-registry/schemas/{schemaId}` - Atualizar schema
+- `DELETE /schema-registry/schemas/{schemaId}` - Deletar schema
+- `POST /schema-registry/schemas/{schemaId}/validate` - Validar dados contra schema
 
 ## 📊 Códigos de Status
 
@@ -108,7 +192,7 @@ Content-Type: application/json
 | 502 | Bad Gateway | Erro de comunicação entre serviços |
 | 503 | Service Unavailable | Serviço temporariamente indisponível |
 
-## 📝 Formato de Resposta
+## 📝 Formatos de Resposta
 
 ### Resposta de Sucesso
 
@@ -121,7 +205,13 @@ Content-Type: application/json
   "meta": {
     "timestamp": "2024-01-15T10:30:00Z",
     "requestId": "req-123456",
-    "version": "v1"
+    "version": "v1",
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 100,
+      "totalPages": 5
+    }
   }
 }
 ```
@@ -137,7 +227,8 @@ Content-Type: application/json
     "details": [
       {
         "field": "email",
-        "message": "Email é obrigatório"
+        "message": "Email é obrigatório",
+        "code": "REQUIRED_FIELD"
       }
     ]
   },
@@ -149,1068 +240,169 @@ Content-Type: application/json
 }
 ```
 
-### Resposta Paginada
+## 🗂️ Modelos de Dados
 
+### Session
 ```json
 {
-  "success": true,
-  "data": [
-    // itens da página
-  ],
-  "pagination": {
-    "page": 1,
-    "limit": 20,
-    "total": 150,
-    "totalPages": 8,
-    "hasNext": true,
-    "hasPrev": false
-  },
-  "meta": {
-    "timestamp": "2024-01-15T10:30:00Z",
-    "requestId": "req-123456",
-    "version": "v1"
-  }
-}
-```
-
-## 🚦 Rate Limiting
-
-### Limites por Endpoint
-
-| Endpoint | Limite | Janela |
-|----------|--------|--------|
-| `/auth/*` | 5 req/min | Por IP |
-| `/api/v1/*` | 1000 req/hour | Por usuário |
-| `/webhooks/*` | 100 req/min | Por IP |
-
-### Headers de Rate Limit
-
-```http
-X-RateLimit-Limit: 1000
-X-RateLimit-Remaining: 999
-X-RateLimit-Reset: 1642248000
-X-RateLimit-Window: 3600
-```
-
-## 🎯 Interface Agent
-
-**Base URL**: `http://localhost:3000` (desenvolvimento)
-
-### Health Check
-
-```http
-GET /health
-```
-
-**Resposta:**
-```json
-{
-  "success": true,
-  "data": {
-    "status": "healthy",
-    "timestamp": "2024-01-15T10:30:00Z",
-    "uptime": 3600,
-    "version": "1.0.0",
-    "dependencies": {
-      "sqs": "healthy",
-      "event-agent": "healthy",
-      "planning-agent": "healthy",
-      "execution-agent": "healthy"
-    }
-  }
-}
-```
-
-### Readiness Check
-
-```http
-GET /ready
-```
-
-**Resposta:**
-```json
-{
-  "success": true,
-  "data": {
-    "ready": true,
-    "checks": {
-      "database": true,
-      "sqs": true,
-      "dependencies": true
-    }
-  }
-}
-```
-
-### Métricas
-
-```http
-GET /metrics
-```
-
-**Resposta:** Formato Prometheus
-```
-# HELP http_requests_total Total number of HTTP requests
-# TYPE http_requests_total counter
-http_requests_total{method="GET",status="200"} 1234
-
-# HELP http_request_duration_seconds HTTP request duration
-# TYPE http_request_duration_seconds histogram
-http_request_duration_seconds_bucket{le="0.1"} 100
-```
-
-### Processar Evento
-
-```http
-POST /api/v1/events
-Content-Type: application/json
-Authorization: Bearer <token>
-
-{
-  "type": "user_action",
-  "source": "web_app",
-  "data": {
-    "userId": "user-123",
-    "action": "button_click",
-    "metadata": {
-      "buttonId": "submit-form",
-      "timestamp": "2024-01-15T10:30:00Z"
-    }
-  },
-  "priority": "normal",
-  "correlationId": "corr-123456"
-}
-```
-
-**Resposta:**
-```json
-{
-  "success": true,
-  "data": {
-    "eventId": "evt-789012",
-    "status": "accepted",
-    "estimatedProcessingTime": 5000,
-    "queuePosition": 3
-  },
-  "meta": {
-    "timestamp": "2024-01-15T10:30:00Z",
-    "requestId": "req-123456",
-    "version": "v1"
-  }
-}
-```
-
-### Consultar Status do Evento
-
-```http
-GET /api/v1/events/{eventId}
-Authorization: Bearer <token>
-```
-
-**Resposta:**
-```json
-{
-  "success": true,
-  "data": {
-    "eventId": "evt-789012",
-    "status": "processing",
-    "progress": 65,
-    "stages": [
-      {
-        "name": "validation",
-        "status": "completed",
-        "duration": 100
-      },
-      {
-        "name": "planning",
-        "status": "completed",
-        "duration": 1500
-      },
-      {
-        "name": "execution",
-        "status": "in_progress",
-        "progress": 65
-      }
-    ],
-    "result": null,
-    "createdAt": "2024-01-15T10:30:00Z",
-    "updatedAt": "2024-01-15T10:32:30Z"
-  }
-}
-```
-
-### Listar Eventos
-
-```http
-GET /api/v1/events?page=1&limit=20&status=completed&type=user_action
-Authorization: Bearer <token>
-```
-
-**Parâmetros de Query:**
-- `page` (int): Número da página (padrão: 1)
-- `limit` (int): Itens por página (padrão: 20, máx: 100)
-- `status` (string): Filtrar por status (`pending`, `processing`, `completed`, `failed`)
-- `type` (string): Filtrar por tipo de evento
-- `source` (string): Filtrar por fonte
-- `startDate` (ISO 8601): Data inicial
-- `endDate` (ISO 8601): Data final
-
-**Resposta:**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "eventId": "evt-789012",
-      "type": "user_action",
-      "status": "completed",
-      "createdAt": "2024-01-15T10:30:00Z",
-      "completedAt": "2024-01-15T10:33:00Z",
-      "duration": 180000
-    }
-  ],
-  "pagination": {
-    "page": 1,
-    "limit": 20,
-    "total": 150,
-    "totalPages": 8,
-    "hasNext": true,
-    "hasPrev": false
-  }
-}
-```
-
-### Cancelar Evento
-
-```http
-DELETE /api/v1/events/{eventId}
-Authorization: Bearer <token>
-```
-
-**Resposta:**
-```json
-{
-  "success": true,
-  "data": {
-    "eventId": "evt-789012",
-    "status": "cancelled",
-    "cancelledAt": "2024-01-15T10:35:00Z"
-  }
-}
-```
-
-## 📡 Event Agent
-
-**Base URL**: `http://localhost:3001` (desenvolvimento)
-
-### Health Check
-
-```http
-GET /health
-```
-
-### Processar Evento Interno
-
-```http
-POST /api/v1/process
-Content-Type: application/json
-
-{
-  "eventId": "evt-789012",
-  "type": "user_action",
-  "data": {
-    "userId": "user-123",
-    "action": "button_click"
-  },
+  "id": "session-123",
+  "userId": "user-456",
+  "status": "active",
   "metadata": {
-    "source": "interface-agent",
-    "timestamp": "2024-01-15T10:30:00Z"
-  }
-}
-```
-
-**Resposta:**
-```json
-{
-  "success": true,
-  "data": {
-    "processId": "proc-456789",
-    "status": "processing",
-    "analysis": {
-      "complexity": "medium",
-      "estimatedDuration": 120000,
-      "requiredAgents": ["planning", "execution"]
-    }
-  }
-}
-```
-
-### Consultar Análise de Evento
-
-```http
-GET /api/v1/analysis/{eventId}
-```
-
-**Resposta:**
-```json
-{
-  "success": true,
-  "data": {
-    "eventId": "evt-789012",
-    "analysis": {
-      "type": "user_action",
-      "complexity": "medium",
-      "patterns": [
-        {
-          "name": "frequent_user",
-          "confidence": 0.85
-        },
-        {
-          "name": "form_submission",
-          "confidence": 0.92
-        }
-      ],
-      "recommendations": [
-        {
-          "action": "prioritize_processing",
-          "reason": "High-value user action"
-        }
-      ],
-      "metadata": {
-        "processingTime": 250,
-        "rulesApplied": 12
-      }
-    }
-  }
-}
-```
-
-### Estatísticas de Processamento
-
-```http
-GET /api/v1/stats?period=24h
-```
-
-**Parâmetros:**
-- `period`: `1h`, `24h`, `7d`, `30d`
-
-**Resposta:**
-```json
-{
-  "success": true,
-  "data": {
-    "period": "24h",
-    "totalEvents": 1250,
-    "processedEvents": 1200,
-    "failedEvents": 50,
-    "averageProcessingTime": 1500,
-    "eventTypes": {
-      "user_action": 800,
-      "system_event": 300,
-      "external_webhook": 150
-    },
-    "complexityDistribution": {
-      "low": 600,
-      "medium": 500,
-      "high": 150
-    }
-  }
-}
-```
-
-## 🧠 Planning Agent
-
-**Base URL**: `http://localhost:3002` (desenvolvimento)
-
-### Health Check
-
-```http
-GET /health
-```
-
-### Criar Plano
-
-```http
-POST /api/v1/plans
-Content-Type: application/json
-
-{
-  "eventId": "evt-789012",
-  "context": {
-    "userId": "user-123",
-    "action": "button_click",
-    "metadata": {
-      "buttonId": "submit-form",
-      "formData": {
-        "name": "John Doe",
-        "email": "john@example.com"
-      }
-    }
+    "userAgent": "Mozilla/5.0...",
+    "ipAddress": "192.168.1.1"
   },
+  "createdAt": "2024-01-15T10:30:00Z",
+  "updatedAt": "2024-01-15T10:35:00Z",
+  "expiresAt": "2024-01-15T22:30:00Z"
+}
+```
+
+### Event
+```json
+{
+  "id": "event-789",
+  "type": "user.action",
+  "source": "web-interface",
+  "data": {
+    "action": "login",
+    "userId": "user-456"
+  },
+  "timestamp": "2024-01-15T10:30:00Z",
+  "metadata": {
+    "correlationId": "corr-123",
+    "priority": "high"
+  },
+  "status": "processed"
+}
+```
+
+### Plan
+```json
+{
+  "id": "plan-101",
+  "name": "Processamento de Pedido",
+  "description": "Plano para processar pedidos de e-commerce",
+  "status": "active",
+  "goals": [
+    "Validar dados do pedido",
+    "Verificar estoque",
+    "Processar pagamento"
+  ],
   "constraints": {
-    "maxDuration": 300000,
-    "priority": "normal",
-    "resources": ["database", "email_service"]
-  }
-}
-```
-
-**Resposta:**
-```json
-{
-  "success": true,
-  "data": {
-    "planId": "plan-345678",
-    "status": "created",
-    "steps": [
-      {
-        "id": "step-1",
-        "name": "validate_form_data",
-        "type": "validation",
-        "order": 1,
-        "estimatedDuration": 500,
-        "dependencies": [],
-        "parameters": {
-          "schema": "user_registration",
-          "data": {
-            "name": "John Doe",
-            "email": "john@example.com"
-          }
-        }
-      },
-      {
-        "id": "step-2",
-        "name": "save_user_data",
-        "type": "database_operation",
-        "order": 2,
-        "estimatedDuration": 1000,
-        "dependencies": ["step-1"],
-        "parameters": {
-          "table": "users",
-          "operation": "insert"
-        }
-      },
-      {
-        "id": "step-3",
-        "name": "send_welcome_email",
-        "type": "notification",
-        "order": 3,
-        "estimatedDuration": 2000,
-        "dependencies": ["step-2"],
-        "parameters": {
-          "template": "welcome_email",
-          "recipient": "john@example.com"
-        }
-      }
-    ],
-    "totalEstimatedDuration": 3500,
-    "createdAt": "2024-01-15T10:30:00Z"
-  }
-}
-```
-
-### Consultar Plano
-
-```http
-GET /api/v1/plans/{planId}
-```
-
-**Resposta:**
-```json
-{
-  "success": true,
-  "data": {
-    "planId": "plan-345678",
-    "eventId": "evt-789012",
-    "status": "approved",
-    "steps": [
-      // array de steps como acima
-    ],
-    "execution": {
-      "startedAt": "2024-01-15T10:31:00Z",
-      "currentStep": "step-2",
-      "progress": 66,
-      "completedSteps": ["step-1"],
-      "failedSteps": []
-    },
-    "createdAt": "2024-01-15T10:30:00Z",
-    "updatedAt": "2024-01-15T10:31:30Z"
-  }
-}
-```
-
-### Atualizar Plano
-
-```http
-PUT /api/v1/plans/{planId}
-Content-Type: application/json
-
-{
-  "steps": [
-    {
-      "id": "step-1",
-      "name": "validate_form_data",
-      "parameters": {
-        "schema": "user_registration_v2"
-      }
-    }
-  ]
-}
-```
-
-### Aprovar Plano
-
-```http
-POST /api/v1/plans/{planId}/approve
-Content-Type: application/json
-
-{
-  "approvedBy": "system",
-  "notes": "Plan approved automatically"
-}
-```
-
-**Resposta:**
-```json
-{
-  "success": true,
-  "data": {
-    "planId": "plan-345678",
-    "status": "approved",
-    "approvedAt": "2024-01-15T10:31:00Z",
-    "approvedBy": "system"
-  }
-}
-```
-
-### Listar Planos
-
-```http
-GET /api/v1/plans?status=approved&page=1&limit=20
-```
-
-**Parâmetros:**
-- `status`: `draft`, `pending`, `approved`, `rejected`, `executing`, `completed`
-- `eventId`: Filtrar por evento
-- `page`, `limit`: Paginação
-
-## ⚡ Execution Agent
-
-**Base URL**: `http://localhost:3003` (desenvolvimento)
-
-### Health Check
-
-```http
-GET /health
-```
-
-### Executar Plano
-
-```http
-POST /api/v1/executions
-Content-Type: application/json
-
-{
-  "planId": "plan-345678",
-  "priority": "normal",
-  "options": {
-    "dryRun": false,
-    "timeout": 300000,
-    "retryPolicy": {
-      "maxRetries": 3,
-      "backoffMultiplier": 2
-    }
-  }
-}
-```
-
-**Resposta:**
-```json
-{
-  "success": true,
-  "data": {
-    "executionId": "exec-567890",
-    "planId": "plan-345678",
-    "status": "running",
-    "startedAt": "2024-01-15T10:32:00Z",
-    "progress": {
-      "currentStep": "step-1",
-      "completedSteps": 0,
-      "totalSteps": 3,
-      "percentage": 0
-    }
-  }
-}
-```
-
-### Consultar Execução
-
-```http
-GET /api/v1/executions/{executionId}
-```
-
-**Resposta:**
-```json
-{
-  "success": true,
-  "data": {
-    "executionId": "exec-567890",
-    "planId": "plan-345678",
-    "status": "running",
-    "startedAt": "2024-01-15T10:32:00Z",
-    "progress": {
-      "currentStep": "step-2",
-      "completedSteps": 1,
-      "totalSteps": 3,
-      "percentage": 33
-    },
-    "steps": [
-      {
-        "id": "step-1",
-        "status": "completed",
-        "startedAt": "2024-01-15T10:32:00Z",
-        "completedAt": "2024-01-15T10:32:05Z",
-        "duration": 5000,
-        "result": {
-          "success": true,
-          "data": {
-            "validationPassed": true
-          }
-        }
-      },
-      {
-        "id": "step-2",
-        "status": "running",
-        "startedAt": "2024-01-15T10:32:05Z",
-        "progress": 50
-      },
-      {
-        "id": "step-3",
-        "status": "pending"
-      }
-    ]
-  }
-}
-```
-
-### Pausar Execução
-
-```http
-POST /api/v1/executions/{executionId}/pause
-```
-
-**Resposta:**
-```json
-{
-  "success": true,
-  "data": {
-    "executionId": "exec-567890",
-    "status": "paused",
-    "pausedAt": "2024-01-15T10:33:00Z"
-  }
-}
-```
-
-### Retomar Execução
-
-```http
-POST /api/v1/executions/{executionId}/resume
-```
-
-### Cancelar Execução
-
-```http
-POST /api/v1/executions/{executionId}/cancel
-Content-Type: application/json
-
-{
-  "reason": "User requested cancellation"
-}
-```
-
-### Listar Execuções
-
-```http
-GET /api/v1/executions?status=running&page=1&limit=20
-```
-
-### Logs de Execução
-
-```http
-GET /api/v1/executions/{executionId}/logs?level=info&limit=100
-```
-
-**Parâmetros:**
-- `level`: `debug`, `info`, `warn`, `error`
-- `limit`: Número máximo de logs (padrão: 100)
-- `offset`: Offset para paginação
-
-**Resposta:**
-```json
-{
-  "success": true,
-  "data": {
-    "logs": [
-      {
-        "timestamp": "2024-01-15T10:32:00Z",
-        "level": "info",
-        "message": "Starting execution of plan plan-345678",
-        "stepId": null,
-        "metadata": {
-          "executionId": "exec-567890"
-        }
-      },
-      {
-        "timestamp": "2024-01-15T10:32:01Z",
-        "level": "info",
-        "message": "Starting step step-1: validate_form_data",
-        "stepId": "step-1",
-        "metadata": {
-          "stepType": "validation"
-        }
-      }
-    ],
-    "pagination": {
-      "limit": 100,
-      "offset": 0,
-      "total": 25
-    }
-  }
-}
-```
-
-## 🔗 Webhooks
-
-### Configurar Webhook
-
-```http
-POST /api/v1/webhooks
-Content-Type: application/json
-Authorization: Bearer <token>
-
-{
-  "url": "https://your-app.com/webhooks/agents",
-  "events": ["event.completed", "execution.failed"],
-  "secret": "webhook-secret-key",
-  "active": true,
-  "retryPolicy": {
-    "maxRetries": 3,
-    "backoffMultiplier": 2
-  }
-}
-```
-
-### Eventos Disponíveis
-
-- `event.created`
-- `event.processing`
-- `event.completed`
-- `event.failed`
-- `plan.created`
-- `plan.approved`
-- `plan.rejected`
-- `execution.started`
-- `execution.completed`
-- `execution.failed`
-- `execution.paused`
-- `execution.resumed`
-- `execution.cancelled`
-
-### Formato do Webhook
-
-```json
-{
-  "id": "webhook-123456",
-  "event": "execution.completed",
-  "timestamp": "2024-01-15T10:35:00Z",
-  "data": {
-    "executionId": "exec-567890",
-    "planId": "plan-345678",
-    "eventId": "evt-789012",
-    "status": "completed",
-    "duration": 180000,
-    "result": {
-      "success": true,
-      "completedSteps": 3,
-      "failedSteps": 0
-    }
+    "maxExecutionTime": 300,
+    "requiredResources": ["payment-service", "inventory-service"]
   },
-  "signature": "sha256=abc123..."
+  "createdAt": "2024-01-15T10:30:00Z",
+  "updatedAt": "2024-01-15T10:35:00Z",
+  "createdBy": "user-456"
 }
 ```
 
-### Verificação de Assinatura
-
-```javascript
-const crypto = require('crypto');
-
-function verifyWebhookSignature(payload, signature, secret) {
-  const expectedSignature = 'sha256=' + 
-    crypto.createHmac('sha256', secret)
-          .update(payload)
-          .digest('hex');
-  
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignature)
-  );
+### Task
+```json
+{
+  "id": "task-202",
+  "planId": "plan-101",
+  "name": "Validar Pagamento",
+  "description": "Validar dados de pagamento do pedido",
+  "status": "running",
+  "priority": "high",
+  "parameters": {
+    "orderId": "order-123",
+    "amount": 99.99,
+    "currency": "BRL"
+  },
+  "result": null,
+  "createdAt": "2024-01-15T10:30:00Z",
+  "startedAt": "2024-01-15T10:31:00Z",
+  "completedAt": null,
+  "estimatedDuration": 30
 }
 ```
 
 ## 💡 Exemplos de Uso
 
-### Fluxo Completo: Processamento de Formulário
-
-```javascript
-// 1. Enviar evento para Interface Agent
-const eventResponse = await fetch('http://localhost:3000/api/v1/events', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer ' + token
-  },
-  body: JSON.stringify({
-    type: 'form_submission',
-    source: 'web_app',
-    data: {
-      formId: 'user-registration',
-      fields: {
-        name: 'John Doe',
-        email: 'john@example.com',
-        phone: '+1234567890'
-      }
-    },
-    priority: 'normal'
-  })
-});
-
-const { data: { eventId } } = await eventResponse.json();
-
-// 2. Monitorar progresso
-const checkProgress = async () => {
-  const response = await fetch(`http://localhost:3000/api/v1/events/${eventId}`, {
-    headers: {
-      'Authorization': 'Bearer ' + token
-    }
-  });
-  
-  const { data } = await response.json();
-  console.log(`Status: ${data.status}, Progress: ${data.progress}%`);
-  
-  if (data.status === 'completed') {
-    console.log('Processamento concluído:', data.result);
-  } else if (data.status === 'failed') {
-    console.error('Processamento falhou:', data.error);
-  } else {
-    setTimeout(checkProgress, 2000); // Verificar novamente em 2s
-  }
-};
-
-checkProgress();
-```
-
-### Processamento em Lote
-
-```javascript
-// Processar múltiplos eventos
-const events = [
-  { type: 'user_action', data: { userId: 'user-1', action: 'login' } },
-  { type: 'user_action', data: { userId: 'user-2', action: 'purchase' } },
-  { type: 'system_event', data: { type: 'backup_completed' } }
-];
-
-const processEvents = async (events) => {
-  const promises = events.map(event => 
-    fetch('http://localhost:3000/api/v1/events', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + token
-      },
-      body: JSON.stringify(event)
-    })
-  );
-  
-  const responses = await Promise.all(promises);
-  const results = await Promise.all(
-    responses.map(r => r.json())
-  );
-  
-  return results.map(r => r.data.eventId);
-};
-
-const eventIds = await processEvents(events);
-console.log('Eventos criados:', eventIds);
-```
-
-### Monitoramento em Tempo Real
-
-```javascript
-// WebSocket para atualizações em tempo real (se disponível)
-const ws = new WebSocket('ws://localhost:3000/ws');
-
-ws.onopen = () => {
-  // Subscrever a eventos específicos
-  ws.send(JSON.stringify({
-    type: 'subscribe',
-    events: ['execution.completed', 'execution.failed']
-  }));
-};
-
-ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  console.log('Atualização em tempo real:', data);
-};
-
-// Alternativa: Polling
-const pollEvents = async () => {
-  const response = await fetch('http://localhost:3000/api/v1/events?status=processing', {
-    headers: { 'Authorization': 'Bearer ' + token }
-  });
-  
-  const { data } = await response.json();
-  console.log(`${data.length} eventos em processamento`);
-};
-
-setInterval(pollEvents, 5000); // Poll a cada 5 segundos
-```
-
-## 📚 SDKs e Bibliotecas
-
-### JavaScript/Node.js SDK
+### Criar e Executar um Plano
 
 ```bash
-npm install @agents/sdk
-```
-
-```javascript
-const { AgentsClient } = require('@agents/sdk');
-
-const client = new AgentsClient({
-  baseUrl: 'http://localhost:3000',
-  apiKey: 'your-api-key'
-});
-
-// Processar evento
-const event = await client.events.create({
-  type: 'user_action',
-  data: { userId: 'user-123' }
-});
-
-// Monitorar progresso
-const status = await client.events.get(event.eventId);
-console.log(status);
-```
-
-### Python SDK
-
-```bash
-pip install agents-sdk
-```
-
-```python
-from agents_sdk import AgentsClient
-
-client = AgentsClient(
-    base_url='http://localhost:3000',
-    api_key='your-api-key'
-)
-
-# Processar evento
-event = client.events.create({
-    'type': 'user_action',
-    'data': {'userId': 'user-123'}
-})
-
-# Monitorar progresso
-status = client.events.get(event['eventId'])
-print(status)
-```
-
-### cURL Examples
-
-```bash
-# Criar evento
-curl -X POST http://localhost:3000/api/v1/events \
-  -H "Content-Type: application/json" \
+# 1. Criar plano
+curl -X POST http://localhost:3000/agents/planning/plans \
   -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
   -d '{
-    "type": "user_action",
-    "data": {
-      "userId": "user-123",
-      "action": "button_click"
-    }
+    "name": "Processar Pedido",
+    "description": "Plano para processar pedido de e-commerce",
+    "goals": ["validar", "processar", "confirmar"]
   }'
 
-# Consultar status
-curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:3000/api/v1/events/evt-789012
-
-# Listar eventos
-curl -H "Authorization: Bearer $TOKEN" \
-  "http://localhost:3000/api/v1/events?page=1&limit=10&status=completed"
-```
-
-## 🔍 Debugging e Logs
-
-### Headers de Debug
-
-```http
-X-Debug-Mode: true
-X-Trace-Id: trace-123456
-```
-
-### Logs Estruturados
-
-Todos os endpoints retornam logs estruturados nos headers de resposta:
-
-```http
-X-Request-Id: req-123456
-X-Processing-Time: 1500
-X-Agent-Version: 1.0.0
-X-Trace-Id: trace-123456
-```
-
-### Endpoint de Debug
-
-```http
-GET /debug/info
-Authorization: Bearer <admin-token>
-```
-
-**Resposta:**
-```json
-{
-  "success": true,
-  "data": {
-    "version": "1.0.0",
-    "environment": "development",
-    "uptime": 3600,
-    "memory": {
-      "used": "150MB",
-      "total": "512MB"
-    },
-    "connections": {
-      "sqs": "connected",
-      "database": "connected"
-    },
-    "queues": {
-      "interface-events": {
-        "messages": 5,
-        "inFlight": 2
-      }
+# 2. Executar plano
+curl -X POST http://localhost:3000/agents/planning/plans/plan-123/execute \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "parameters": {
+      "orderId": "order-456",
+      "priority": "high"
     }
+  }'
+```
+
+### Monitorar Execução
+
+```bash
+# Verificar status do plano
+curl -X GET http://localhost:3000/agents/planning/plans/plan-123/status \
+  -H "Authorization: Bearer $TOKEN"
+
+# Obter métricas do sistema
+curl -X GET http://localhost:3000/monitoring/metrics \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+## ⚡ Rate Limiting
+
+- **Limite padrão**: 1000 requisições/minuto por usuário
+- **Headers de resposta**:
+  - `X-RateLimit-Limit`: Limite total
+  - `X-RateLimit-Remaining`: Requisições restantes
+  - `X-RateLimit-Reset`: Timestamp do reset
+
+### Exemplo de Resposta com Rate Limit
+
+```http
+HTTP/1.1 429 Too Many Requests
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1642248000
+
+{
+  "success": false,
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "Limite de requisições excedido",
+    "retryAfter": 60
   }
 }
 ```
 
+## 🔄 Versionamento
+
+- **Versão atual**: v1
+- **Header**: `API-Version: v1`
+- **Compatibilidade**: Mantida por pelo menos 12 meses
+- **Deprecação**: Notificada com 6 meses de antecedência
+
+### Exemplo de Uso com Versionamento
+
+```bash
+curl -X GET http://localhost:3000/health \
+  -H "API-Version: v1" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
 ---
 
-**Última atualização**: $(date)
-**Versão da API**: v1
-**Documentação**: [Swagger/OpenAPI](./openapi.yaml)
-
-Para mais informações:
-- [Guia de Desenvolvimento](./DEVELOPMENT.md)
-- [Arquitetura](./ARCHITECTURE.md)
-- [Troubleshooting](./TROUBLESHOOTING.md)
+**Última atualização**: Janeiro 2024  
+**Versão da API**: v1  
+**Contato**: dev@agentesautonomos.com

@@ -1,11 +1,13 @@
-# Arquitetura do Sistema de Agentes Autônomos
+# 🏗️ Arquitetura - Sistema de Agentes Autônomos
 
-Este documento descreve a arquitetura técnica do sistema de agentes autônomos, incluindo componentes, padrões de comunicação, fluxos de dados e decisões de design.
+Este documento descreve a arquitetura técnica completa do sistema de agentes autônomos, incluindo componentes, padrões de comunicação, fluxos de dados, infraestrutura e decisões de design.
 
 ## 📋 Índice
 
 - [Visão Geral](#visão-geral)
+- [Princípios Arquiteturais](#princípios-arquiteturais)
 - [Componentes Principais](#componentes-principais)
+- [Topologia da Arquitetura](#topologia-da-arquitetura)
 - [Padrões de Comunicação](#padrões-de-comunicação)
 - [Fluxos de Dados](#fluxos-de-dados)
 - [Infraestrutura](#infraestrutura)
@@ -14,9 +16,11 @@ Este documento descreve a arquitetura técnica do sistema de agentes autônomos,
 - [Monitoramento](#monitoramento)
 - [Decisões de Design](#decisões-de-design)
 
-## 🏗️ Visão Geral
+## 🌐 Visão Geral
 
 ### Arquitetura de Alto Nível
+
+O sistema implementa uma arquitetura distribuída baseada em agentes autônomos que colaboram para processar eventos, planejar ações e executar tarefas de forma coordenada.
 
 ```mermaid
 graph TB
@@ -30,17 +34,22 @@ graph TB
         EA[Event Agent]
         PA[Planning Agent]
         EXA[Execution Agent]
+        MA[Mediator Agent]
+        OA[Orchestrator Agent]
     end
     
     subgraph "Infraestrutura"
-        SQS[Amazon SQS Local]
+        SQS[Amazon SQS]
         PROM[Prometheus]
         GRAF[Grafana]
+        REDIS[Redis]
+        PG[PostgreSQL]
     end
     
     subgraph "Persistência"
         LOGS[Logs]
         METRICS[Métricas]
+        DATA[Dados]
     end
     
     UI --> IA
@@ -49,11 +58,13 @@ graph TB
     IA <--> EA
     EA <--> PA
     PA <--> EXA
+    IA <--> MA
+    MA <--> OA
     
-    IA -.-> SQS
-    EA -.-> SQS
-    PA -.-> SQS
-    EXA -.-> SQS
+    IA --> SQS
+    EA --> SQS
+    PA --> SQS
+    EXA --> SQS
     
     IA --> PROM
     EA --> PROM
@@ -62,610 +73,687 @@ graph TB
     
     PROM --> GRAF
     
-    IA --> LOGS
-    EA --> LOGS
-    PA --> LOGS
-    EXA --> LOGS
+    IA --> REDIS
+    EA --> PG
+    PA --> PG
+    EXA --> PG
+    
+    PROM --> LOGS
+    GRAF --> METRICS
+    PG --> DATA
 ```
 
-### Princípios Arquiteturais
+## 🎯 Princípios Arquiteturais
 
-1. **Microserviços**: Cada agente é um serviço independente
-2. **Event-Driven**: Comunicação baseada em eventos
-3. **Loosely Coupled**: Baixo acoplamento entre componentes
-4. **Resilient**: Tolerância a falhas e recuperação automática
-5. **Observable**: Monitoramento e logging abrangentes
-6. **Scalable**: Capacidade de escalar horizontalmente
+### Event-Driven Architecture (EDA)
+O sistema é fundamentalmente baseado em eventos, onde cada ação gera eventos que são processados de forma assíncrona pelos agentes especializados.
 
-## 🧩 Componentes Principais
+### Microserviços Autônomos
+Cada agente opera como um microserviço independente com:
+- **Responsabilidade única**: Cada agente tem uma função específica
+- **Autonomia**: Capacidade de tomar decisões locais
+- **Comunicação assíncrona**: Via filas de mensagens
+- **Tolerância a falhas**: Recuperação automática e graceful degradation
 
-### 1. Interface Agent
+### Arquitetura BDI (Belief-Desire-Intention)
+- **Beliefs**: Estado atual do sistema e conhecimento
+- **Desires**: Objetivos e metas a serem alcançados
+- **Intentions**: Planos e ações para atingir os objetivos
 
-**Responsabilidades**:
-- Receber requisições HTTP dos clientes
-- Validar e sanitizar entrada
-- Coordenar fluxos entre agentes
-- Retornar respostas aos clientes
-- Gerenciar autenticação e autorização
+### MARL (Multi-Agent Reinforcement Learning)
+- **Aprendizado colaborativo**: Agentes aprendem uns com os outros
+- **Otimização distribuída**: Melhoria contínua de performance
+- **Adaptação dinâmica**: Ajuste automático a mudanças no ambiente
 
-**Tecnologias**:
+## 🔧 Componentes Principais
+
+### Interface Agent (Porta 3000)
+**Responsabilidades:**
+- Recepção de requisições HTTP/REST
+- Validação e sanitização de entrada
+- Roteamento para agentes apropriados
+- Gerenciamento de sessões de usuário
+- Agregação de respostas
+
+**Tecnologias:**
 - Express.js para servidor HTTP
-- Helmet para segurança
-- CORS para cross-origin
-- Rate limiting para proteção
+- JWT para autenticação
+- Joi para validação
+- Rate limiting com express-rate-limit
 
-**Endpoints Principais**:
-```
-GET  /health          # Health check
-GET  /metrics         # Métricas Prometheus
-POST /api/events      # Criar eventos
-GET  /api/status      # Status do sistema
-POST /api/execute     # Executar ações
-```
+### Event Agent (Porta 3001)
+**Responsabilidades:**
+- Processamento e enriquecimento de eventos
+- Análise de padrões e correlações
+- Classificação de complexidade
+- Roteamento inteligente
+- Detecção de anomalias
 
-### 2. Event Agent
+**Tecnologias:**
+- Machine Learning para análise de padrões
+- Stream processing para eventos em tempo real
+- Pattern matching engines
 
-**Responsabilidades**:
-- Processar eventos recebidos
-- Validar estrutura dos eventos
-- Enriquecer eventos com contexto
-- Rotear eventos para agentes apropriados
-- Manter histórico de eventos
-
-**Padrões Implementados**:
-- Event Sourcing
-- Command Query Responsibility Segregation (CQRS)
-- Saga Pattern para transações distribuídas
-
-**Estrutura de Eventos**:
-```javascript
-{
-  id: 'uuid',
-  type: 'event.type',
-  source: 'agent.name',
-  timestamp: 'ISO8601',
-  data: { /* payload */ },
-  metadata: { /* context */ }
-}
-```
-
-### 3. Planning Agent
-
-**Responsabilidades**:
-- Analisar eventos e determinar ações necessárias
-- Criar planos de execução
-- Otimizar sequência de ações
-- Gerenciar dependências entre tarefas
-- Adaptar planos baseado em feedback
-
-**Algoritmos**:
-- Planejamento hierárquico
+### Planning Agent (Porta 3002)
+**Responsabilidades:**
+- Criação de planos de execução
 - Otimização de recursos
 - Análise de dependências
-- Heurísticas de priorização
+- Estimativa de tempo e custo
+- Validação de viabilidade
 
-**Estrutura de Planos**:
-```javascript
-{
-  id: 'plan-uuid',
-  eventId: 'event-uuid',
-  actions: [
-    {
-      id: 'action-uuid',
-      type: 'action.type',
-      priority: 1,
-      dependencies: ['action-uuid'],
-      parameters: { /* config */ },
-      timeout: 30000
-    }
-  ],
-  metadata: {
-    estimatedDuration: 60000,
-    complexity: 'medium',
-    resources: ['cpu', 'memory']
-  }
-}
+**Tecnologias:**
+- Algoritmos de planejamento (A*, STRIPS)
+- Otimização com programação linear
+- Análise de grafos para dependências
+
+### Execution Agent (Porta 3003)
+**Responsabilidades:**
+- Execução de tarefas planejadas
+- Monitoramento de progresso
+- Controle de recursos
+- Recuperação de falhas
+- Relatórios de execução
+
+**Tecnologias:**
+- Task scheduling e queue management
+- Resource pooling
+- Circuit breakers para tolerância a falhas
+
+### Mediator Agent (Porta 3012)
+**Responsabilidades:**
+- Mediação de comunicação entre agentes
+- Resolução de conflitos
+- Coordenação de workflows
+- Balanceamento de carga
+
+### Orchestrator Agent
+**Responsabilidades:**
+- Orquestração de workflows complexos
+- Coordenação de múltiplos agentes
+- Gerenciamento de estado global
+- Supervisão de execução
+
+## 🌐 Topologia da Arquitetura
+
+### Camada de Entrada
+```mermaid
+graph TB
+    subgraph "Camada de Entrada"
+        EXT[Eventos Externos]
+        API[API Requests]
+        WEB[Web Interface]
+        WEBHOOK[Webhooks]
+    end
+    
+    subgraph "Camada de Interface"
+        IA[Interface Agent]
+        LB[Load Balancer]
+    end
+    
+    EXT --> LB
+    API --> LB
+    WEB --> LB
+    WEBHOOK --> LB
+    LB --> IA
 ```
 
-### 4. Execution Agent
+### Camada de Processamento
+```mermaid
+graph TB
+    subgraph "Camada de Processamento"
+        EA[Event Agent]
+        PA[Planning Agent]
+        EXA[Execution Agent]
+    end
+    
+    subgraph "Camada de Suporte"
+        MA[Monitoring Agent]
+        SA[Security Agent]
+        POA[Policy Agent]
+    end
+    
+    subgraph "Camada de Coordenação"
+        MED[Mediator Agent]
+        ORC[Orchestrator Agent]
+    end
+    
+    EA --> PA
+    PA --> EXA
+    EA --> MED
+    PA --> MED
+    EXA --> MED
+    MED --> ORC
+    
+    MA --> EA
+    MA --> PA
+    MA --> EXA
+    
+    SA --> EA
+    SA --> PA
+    SA --> EXA
+    
+    POA --> PA
+    POA --> EXA
+```
 
-**Responsabilidades**:
-- Executar ações planejadas
-- Gerenciar recursos de execução
-- Monitorar progresso das tarefas
-- Lidar com falhas e retry
-- Reportar status de execução
+## 📡 Padrões de Comunicação
 
-**Padrões Implementados**:
-- Worker Pool Pattern
-- Circuit Breaker
-- Retry with Exponential Backoff
-- Bulkhead Pattern
+### Comunicação Síncrona
+- **HTTP/REST**: Para operações que requerem resposta imediata
+- **gRPC**: Para comunicação interna de alta performance
+- **WebSockets**: Para atualizações em tempo real
 
-**Estados de Execução**:
-- `pending`: Aguardando execução
-- `running`: Em execução
-- `completed`: Concluída com sucesso
-- `failed`: Falhou
-- `cancelled`: Cancelada
-- `timeout`: Timeout
+### Comunicação Assíncrona
+- **Amazon SQS**: Filas de mensagens para processamento assíncrono
+- **Event Sourcing**: Armazenamento de eventos para auditoria
+- **CQRS**: Separação de comandos e consultas
 
-## 🔄 Padrões de Comunicação
+### Padrões de Mensageria
 
-### 1. Comunicação Síncrona (HTTP)
-
-**Uso**: Operações que requerem resposta imediata
-
+#### Request-Reply
 ```mermaid
 sequenceDiagram
     participant C as Cliente
     participant IA as Interface Agent
     participant EA as Event Agent
     
-    C->>IA: POST /api/events
-    IA->>EA: POST /process-event
-    EA-->>IA: Response
-    IA-->>C: Response
+    C->>IA: HTTP Request
+    IA->>EA: Process Event
+    EA->>IA: Event Processed
+    IA->>C: HTTP Response
 ```
 
-**Características**:
-- Timeout configurável
-- Retry automático
-- Circuit breaker
-- Load balancing
+#### Publish-Subscribe
+```mermaid
+sequenceDiagram
+    participant EA as Event Agent
+    participant SQS as SQS Queue
+    participant PA as Planning Agent
+    participant EXA as Execution Agent
+    
+    EA->>SQS: Publish Event
+    SQS->>PA: Subscribe to Event
+    SQS->>EXA: Subscribe to Event
+    PA->>SQS: Publish Plan
+    SQS->>EXA: Subscribe to Plan
+```
 
-### 2. Comunicação Assíncrona (SQS)
+## 🌊 Fluxos de Dados
 
-**Uso**: Processamento em background e desacoplamento
+### Fluxo Principal de Processamento
+
+1. **Recepção**: Interface Agent recebe evento/requisição
+2. **Validação**: Validação de dados e autenticação
+3. **Roteamento**: Envio para Event Agent via SQS
+4. **Análise**: Event Agent processa e enriquece evento
+5. **Planejamento**: Planning Agent cria plano de execução
+6. **Execução**: Execution Agent executa tarefas planejadas
+7. **Resposta**: Resultado retornado ao cliente
+
+### Fluxo de Monitoramento
 
 ```mermaid
 sequenceDiagram
-    participant IA as Interface Agent
-    participant SQS as SQS Queue
-    participant EA as Event Agent
+    participant Agent as Qualquer Agent
+    participant PROM as Prometheus
+    participant GRAF as Grafana
+    participant ALERT as Alerting
     
-    IA->>SQS: Send Message
-    Note over SQS: Message queued
-    EA->>SQS: Poll Messages
-    SQS-->>EA: Message
-    EA->>EA: Process
-    EA->>SQS: Delete Message
+    loop Coleta de Métricas
+        Agent->>PROM: Enviar Métricas
+        PROM->>GRAF: Dados para Visualização
+        PROM->>ALERT: Verificar Alertas
+    end
 ```
 
-**Filas Principais**:
-- `interface-events`: Eventos do Interface Agent
-- `event-processing`: Processamento de eventos
-- `planning-requests`: Solicitações de planejamento
-- `execution-requests`: Solicitações de execução
-- `notifications`: Notificações do sistema
-- `status-updates`: Atualizações de status
-
-### 3. Padrão Request-Response
-
-```javascript
-// Coordenação entre agentes
-class CoordinationUtils {
-  async sendToAgent(agentName, endpoint, data) {
-    const client = this.getAgentClient(agentName);
-    
-    // Circuit breaker check
-    if (this.circuitBreakers[agentName].isOpen()) {
-      throw new Error(`Circuit breaker open for ${agentName}`);
-    }
-    
-    try {
-      const response = await client.post(endpoint, data);
-      this.circuitBreakers[agentName].recordSuccess();
-      return response.data;
-    } catch (error) {
-      this.circuitBreakers[agentName].recordFailure();
-      throw error;
-    }
-  }
-}
-```
-
-## 📊 Fluxos de Dados
-
-### 1. Fluxo Principal de Processamento
+### Fluxo de Dados Persistentes
 
 ```mermaid
-flowchart TD
-    A[Cliente envia requisição] --> B[Interface Agent recebe]
-    B --> C[Validação e sanitização]
-    C --> D[Criação de evento]
-    D --> E[Event Agent processa]
-    E --> F[Planning Agent cria plano]
-    F --> G[Execution Agent executa]
-    G --> H[Atualização de status]
-    H --> I[Resposta ao cliente]
+graph TB
+    subgraph "Entrada de Dados"
+        EVENTS[Eventos]
+        METRICS[Métricas]
+        LOGS[Logs]
+    end
     
-    E --> J[Fila SQS]
-    F --> K[Fila SQS]
-    G --> L[Fila SQS]
+    subgraph "Processamento"
+        STREAM[Stream Processing]
+        BATCH[Batch Processing]
+    end
     
-    J --> M[Logs]
-    K --> M
-    L --> M
+    subgraph "Armazenamento"
+        PG[PostgreSQL]
+        REDIS[Redis Cache]
+        S3[S3 Storage]
+    end
     
-    G --> N[Métricas]
-    N --> O[Prometheus]
-    O --> P[Grafana]
-```
-
-### 2. Fluxo de Monitoramento
-
-```mermaid
-flowchart LR
-    A[Agentes] --> B[Métricas]
-    B --> C[Prometheus]
-    C --> D[Grafana]
+    EVENTS --> STREAM
+    METRICS --> STREAM
+    LOGS --> BATCH
     
-    A --> E[Logs]
-    E --> F[Arquivo de Log]
-    
-    A --> G[Health Checks]
-    G --> H[Monitor Script]
-    
-    C --> I[Alertas]
-    I --> J[Notificações]
-```
-
-### 3. Fluxo de Erro e Recuperação
-
-```mermaid
-flowchart TD
-    A[Erro detectado] --> B[Log do erro]
-    B --> C[Circuit breaker ativado?]
-    C -->|Sim| D[Falha rápida]
-    C -->|Não| E[Retry com backoff]
-    E --> F[Sucesso?]
-    F -->|Sim| G[Reset circuit breaker]
-    F -->|Não| H[Incrementar falhas]
-    H --> I[Limite atingido?]
-    I -->|Sim| J[Abrir circuit breaker]
-    I -->|Não| E
-    D --> K[Notificar erro]
-    J --> K
-    G --> L[Continuar processamento]
+    STREAM --> PG
+    STREAM --> REDIS
+    BATCH --> S3
 ```
 
 ## 🏗️ Infraestrutura
 
-### Containerização
+### Ambiente Local (Desenvolvimento)
 
-**Docker Compose Services**:
+#### Containerização
 ```yaml
+# docker-compose.yml
+version: '3.8'
 services:
-  # Message Queue
-  elasticmq:
-    image: softwaremill/elasticmq-native
-    ports: ["9324:9324"]
-    
-  # Agents
-  interface-agent:
-    build: ./docker/interface-agent.Dockerfile
-    ports: ["3000:3000"]
-    
-  event-agent:
-    build: ./docker/event-agent.Dockerfile
-    ports: ["3001:3001"]
-    
-  # Monitoring
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: agentes_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    ports:
+      - "5432:5432"
+  
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass redis123
+    ports:
+      - "6379:6379"
+  
+  localstack:
+    image: localstack/localstack:latest
+    environment:
+      SERVICES: sqs,s3
+      DEBUG: 1
+    ports:
+      - "4566:4566"
+  
   prometheus:
-    image: prom/prometheus
-    ports: ["9090:9090"]
-    
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+  
   grafana:
-    image: grafana/grafana
-    ports: ["3100:3000"]
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
 ```
 
-### Configuração de Rede
-
+#### Configuração de Rede
 ```yaml
 networks:
-  agents-network:
+  agentes-network:
     driver: bridge
     ipam:
       config:
         - subnet: 172.20.0.0/16
 ```
 
-### Volumes e Persistência
+### Ambiente de Produção (AWS)
 
+#### Infraestrutura como Código
 ```yaml
-volumes:
-  prometheus-data:
-  grafana-data:
-  logs-data:
+# terraform/main.tf
+resource "aws_ecs_cluster" "agentes_cluster" {
+  name = "agentes-autonomos"
+  
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
+}
+
+resource "aws_sqs_queue" "events_queue" {
+  name                      = "agentes-events"
+  delay_seconds             = 0
+  max_message_size          = 262144
+  message_retention_seconds = 1209600
+  receive_wait_time_seconds = 10
+}
+
+resource "aws_rds_instance" "postgres" {
+  identifier     = "agentes-postgres"
+  engine         = "postgres"
+  engine_version = "15.3"
+  instance_class = "db.t3.micro"
+  allocated_storage = 20
+  
+  db_name  = "agentes_db"
+  username = "postgres"
+  password = var.db_password
+  
+  multi_az = true
+  backup_retention_period = 7
+}
 ```
 
 ## 🔒 Segurança
 
-### 1. Autenticação e Autorização
+### Autenticação e Autorização
 
+#### JWT (JSON Web Tokens)
 ```javascript
-// JWT-based authentication
-const authMiddleware = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  
-  if (!token) {
-    return res.status(401).json({ error: 'Token required' });
+// Estrutura do Token
+{
+  "header": {
+    "alg": "HS256",
+    "typ": "JWT"
+  },
+  "payload": {
+    "sub": "user-123",
+    "iat": 1642248000,
+    "exp": 1642251600,
+    "roles": ["admin", "operator"],
+    "permissions": ["read", "write", "execute"]
   }
-  
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
-};
-```
-
-### 2. Validação de Entrada
-
-```javascript
-// Schema validation with Joi
-const eventSchema = Joi.object({
-  type: Joi.string().required(),
-  data: Joi.object().required(),
-  source: Joi.string().optional(),
-  metadata: Joi.object().optional()
-});
-
-const validateEvent = (req, res, next) => {
-  const { error } = eventSchema.validate(req.body);
-  if (error) {
-    return res.status(400).json({ error: error.details[0].message });
-  }
-  next();
-};
-```
-
-### 3. Rate Limiting
-
-```javascript
-const rateLimit = require('express-rate-limit');
-
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP'
-});
-```
-
-### 4. Sanitização
-
-```javascript
-const helmet = require('helmet');
-const xss = require('xss');
-
-// Security headers
-app.use(helmet());
-
-// XSS protection
-const sanitizeInput = (req, res, next) => {
-  if (req.body) {
-    req.body = sanitizeObject(req.body);
-  }
-  next();
-};
-
-function sanitizeObject(obj) {
-  for (const key in obj) {
-    if (typeof obj[key] === 'string') {
-      obj[key] = xss(obj[key]);
-    } else if (typeof obj[key] === 'object') {
-      obj[key] = sanitizeObject(obj[key]);
-    }
-  }
-  return obj;
 }
 ```
 
-## 📈 Escalabilidade
-
-### 1. Escalonamento Horizontal
-
+#### RBAC (Role-Based Access Control)
 ```yaml
-# Docker Compose scaling
-docker-compose up --scale interface-agent=3 --scale event-agent=2
+roles:
+  admin:
+    permissions:
+      - "*"
+  operator:
+    permissions:
+      - "events:read"
+      - "events:create"
+      - "plans:read"
+      - "executions:read"
+  viewer:
+    permissions:
+      - "events:read"
+      - "plans:read"
+      - "executions:read"
 ```
 
-### 2. Load Balancing
+### Segurança de Rede
 
-```nginx
-# Nginx configuration
-upstream interface_agents {
-    server interface-agent-1:3000;
-    server interface-agent-2:3000;
-    server interface-agent-3:3000;
-}
-
-server {
-    listen 80;
-    location / {
-        proxy_pass http://interface_agents;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
+#### VPC Configuration
+```yaml
+VPC:
+  CIDR: 10.0.0.0/16
+  
+Subnets:
+  Public:
+    - 10.0.1.0/24  # Load Balancer
+    - 10.0.2.0/24  # NAT Gateway
+  
+  Private:
+    - 10.0.10.0/24 # Application Tier
+    - 10.0.11.0/24 # Application Tier
+  
+  Database:
+    - 10.0.20.0/24 # Database Tier
+    - 10.0.21.0/24 # Database Tier
 ```
 
-### 3. Auto-scaling
+#### Security Groups
+```yaml
+Application_SG:
+  Inbound:
+    - Port: 3000-3012
+      Source: Load_Balancer_SG
+    - Port: 22
+      Source: Bastion_SG
+  
+  Outbound:
+    - Port: 5432
+      Destination: Database_SG
+    - Port: 6379
+      Destination: Redis_SG
+    - Port: 443
+      Destination: 0.0.0.0/0
 
-```javascript
-// Auto-scaling based on metrics
-class AutoScaler {
-  async checkMetrics() {
-    const cpuUsage = await this.getCPUUsage();
-    const queueSize = await this.getQueueSize();
+Database_SG:
+  Inbound:
+    - Port: 5432
+      Source: Application_SG
+  
+  Outbound: []
+```
+
+## ⚡ Escalabilidade
+
+### Escalabilidade Horizontal
+
+#### Auto Scaling Groups
+```yaml
+AutoScalingGroup:
+  MinSize: 2
+  MaxSize: 10
+  DesiredCapacity: 3
+  
+  ScalingPolicies:
+    ScaleUp:
+      MetricName: CPUUtilization
+      Threshold: 70
+      ScalingAdjustment: +2
     
-    if (cpuUsage > 80 || queueSize > 1000) {
-      await this.scaleUp();
-    } else if (cpuUsage < 20 && queueSize < 100) {
-      await this.scaleDown();
-    }
-  }
-}
+    ScaleDown:
+      MetricName: CPUUtilization
+      Threshold: 30
+      ScalingAdjustment: -1
+```
+
+#### Load Balancing
+```yaml
+ApplicationLoadBalancer:
+  Type: Application
+  Scheme: internet-facing
+  
+  TargetGroups:
+    - Name: interface-agents
+      Port: 3000
+      HealthCheck:
+        Path: /health
+        Interval: 30
+        Timeout: 5
+        HealthyThreshold: 2
+        UnhealthyThreshold: 3
+```
+
+### Escalabilidade Vertical
+
+#### Resource Allocation
+```yaml
+ECS_TaskDefinition:
+  CPU: 512
+  Memory: 1024
+  
+  ContainerDefinitions:
+    - Name: interface-agent
+      CPU: 256
+      Memory: 512
+      MemoryReservation: 256
+    
+    - Name: event-agent
+      CPU: 256
+      Memory: 512
+      MemoryReservation: 256
 ```
 
 ## 📊 Monitoramento
 
-### 1. Métricas Coletadas
+### Métricas de Sistema
 
-```javascript
-// Prometheus metrics
-const promClient = require('prom-client');
-
-const httpRequestsTotal = new promClient.Counter({
-  name: 'http_requests_total',
-  help: 'Total number of HTTP requests',
-  labelNames: ['method', 'route', 'status']
-});
-
-const httpRequestDuration = new promClient.Histogram({
-  name: 'http_request_duration_seconds',
-  help: 'Duration of HTTP requests in seconds',
-  labelNames: ['method', 'route']
-});
-
-const queueSize = new promClient.Gauge({
-  name: 'queue_size',
-  help: 'Current queue size',
-  labelNames: ['queue_name']
-});
-```
-
-### 2. Health Checks
-
-```javascript
-// Health check endpoint
-app.get('/health', async (req, res) => {
-  const health = {
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    memory: process.memoryUsage(),
-    dependencies: {
-      sqs: await checkSQSConnection(),
-      database: await checkDatabaseConnection()
-    }
-  };
-  
-  const isHealthy = Object.values(health.dependencies)
-    .every(dep => dep.status === 'healthy');
-  
-  res.status(isHealthy ? 200 : 503).json(health);
-});
-```
-
-### 3. Alertas
-
+#### Métricas de Performance
 ```yaml
-# Prometheus alerting rules
-groups:
-  - name: agents
-    rules:
-      - alert: AgentDown
-        expr: up == 0
-        for: 1m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Agent {{ $labels.instance }} is down"
-          
-      - alert: HighErrorRate
-        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
-        for: 2m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High error rate on {{ $labels.instance }}"
+Metrics:
+  System:
+    - cpu_usage_percent
+    - memory_usage_percent
+    - disk_usage_percent
+    - network_io_bytes
+  
+  Application:
+    - http_requests_total
+    - http_request_duration_seconds
+    - active_connections
+    - queue_size
+  
+  Business:
+    - events_processed_total
+    - plans_created_total
+    - executions_completed_total
+    - error_rate_percent
+```
+
+#### Alertas
+```yaml
+Alerts:
+  Critical:
+    - name: HighErrorRate
+      condition: error_rate > 5%
+      duration: 5m
+      action: page_oncall
+    
+    - name: ServiceDown
+      condition: up == 0
+      duration: 1m
+      action: page_oncall
+  
+  Warning:
+    - name: HighLatency
+      condition: p95_latency > 1s
+      duration: 10m
+      action: slack_notification
+    
+    - name: HighCPU
+      condition: cpu_usage > 80%
+      duration: 15m
+      action: slack_notification
+```
+
+### Observabilidade
+
+#### Distributed Tracing
+```javascript
+// OpenTelemetry Configuration
+const { NodeSDK } = require('@opentelemetry/sdk-node');
+const { JaegerExporter } = require('@opentelemetry/exporter-jaeger');
+
+const sdk = new NodeSDK({
+  traceExporter: new JaegerExporter({
+    endpoint: 'http://jaeger:14268/api/traces'
+  }),
+  instrumentations: [
+    getNodeAutoInstrumentations()
+  ]
+});
+
+sdk.start();
+```
+
+#### Structured Logging
+```javascript
+// Winston Configuration
+const winston = require('winston');
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.errors({ stack: true }),
+    winston.format.json()
+  ),
+  defaultMeta: {
+    service: 'interface-agent',
+    version: process.env.APP_VERSION
+  },
+  transports: [
+    new winston.transports.File({ filename: 'error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'combined.log' }),
+    new winston.transports.Console()
+  ]
+});
 ```
 
 ## 🎯 Decisões de Design
 
-### 1. Por que Microserviços?
+### Escolhas Tecnológicas
 
-**Vantagens**:
-- Isolamento de falhas
-- Escalabilidade independente
-- Tecnologias específicas por domínio
-- Desenvolvimento paralelo
-- Deploy independente
-
-**Desvantagens**:
-- Complexidade de rede
-- Consistência eventual
-- Debugging distribuído
-- Overhead de comunicação
-
-### 2. Por que Event-Driven?
-
-**Vantagens**:
-- Baixo acoplamento
-- Escalabilidade
-- Flexibilidade
-- Auditoria natural
-- Recuperação de estado
-
-**Desvantagens**:
-- Complexidade de debugging
-- Consistência eventual
-- Ordenação de eventos
-- Duplicação de eventos
-
-### 3. Por que SQS Local (ElasticMQ)?
-
-**Vantagens**:
-- Compatibilidade com AWS SQS
-- Desenvolvimento local
-- Sem custos
-- Controle total
-- Facilidade de teste
-
-**Desvantagens**:
-- Não é produção-ready
-- Limitações de features
-- Manutenção adicional
-
-### 4. Por que Prometheus + Grafana?
-
-**Vantagens**:
-- Padrão da indústria
-- Flexibilidade de queries
-- Alertas integrados
-- Visualizações ricas
+#### Node.js vs Outras Linguagens
+**Escolha**: Node.js  
+**Razões**:
+- Excelente para I/O assíncrono
+- Ecossistema rico (npm)
+- Facilidade de desenvolvimento
+- Performance adequada para o caso de uso
 - Comunidade ativa
 
-**Desvantagens**:
-- Curva de aprendizado
-- Configuração complexa
-- Uso de recursos
+#### SQS vs Outras Filas
+**Escolha**: Amazon SQS  
+**Razões**:
+- Gerenciado pela AWS
+- Alta disponibilidade
+- Escalabilidade automática
+- Integração nativa com outros serviços AWS
+- Custo-benefício
 
-## 🔮 Evolução Futura
+#### PostgreSQL vs NoSQL
+**Escolha**: PostgreSQL  
+**Razões**:
+- ACID compliance
+- Suporte a JSON para flexibilidade
+- Maturidade e estabilidade
+- Excelente performance
+- Ferramentas de administração
 
-### Próximas Funcionalidades
+### Padrões Arquiteturais
 
-1. **Service Mesh** (Istio/Linkerd)
-2. **Event Streaming** (Apache Kafka)
-3. **Distributed Tracing** (Jaeger/Zipkin)
-4. **API Gateway** (Kong/Ambassador)
-5. **Machine Learning** para otimização
+#### Event Sourcing
+**Implementação**:
+- Todos os eventos são armazenados como log imutável
+- Estado atual derivado da reprodução de eventos
+- Auditoria completa de todas as mudanças
+- Capacidade de replay para debugging
 
-### Melhorias de Arquitetura
+#### CQRS (Command Query Responsibility Segregation)
+**Implementação**:
+- Separação entre operações de escrita (commands) e leitura (queries)
+- Otimização independente de cada lado
+- Escalabilidade diferenciada
+- Modelos de dados específicos para cada uso
 
-1. **CQRS completo** com Event Store
-2. **Saga Orchestration** para transações
-3. **Multi-tenancy** para isolamento
-4. **Edge Computing** para latência
-5. **Chaos Engineering** para resiliência
+#### Circuit Breaker
+**Implementação**:
+```javascript
+const CircuitBreaker = require('opossum');
+
+const options = {
+  timeout: 3000,
+  errorThresholdPercentage: 50,
+  resetTimeout: 30000
+};
+
+const breaker = new CircuitBreaker(callExternalService, options);
+
+breaker.on('open', () => console.log('Circuit breaker is open'));
+breaker.on('halfOpen', () => console.log('Circuit breaker is half-open'));
+```
+
+### Trade-offs e Limitações
+
+#### Consistência vs Disponibilidade
+**Escolha**: Eventual Consistency  
+**Trade-off**: Prioriza disponibilidade sobre consistência forte  
+**Mitigação**: Implementação de reconciliação e compensação
+
+#### Performance vs Observabilidade
+**Escolha**: Observabilidade completa  
+**Trade-off**: Overhead de logging e métricas  
+**Mitigação**: Sampling inteligente e agregação eficiente
+
+#### Flexibilidade vs Simplicidade
+**Escolha**: Flexibilidade através de configuração  
+**Trade-off**: Maior complexidade de configuração  
+**Mitigação**: Defaults sensatos e documentação clara
 
 ---
 
-**Última atualização**: $(date)
-**Versão da Arquitetura**: 1.0.0
-**Revisores**: Equipe de Arquitetura
+**Última atualização**: Janeiro 2024  
+**Versão da Arquitetura**: v2.0  
+**Próxima revisão**: Abril 2024

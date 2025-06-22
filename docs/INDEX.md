@@ -1,9 +1,27 @@
-# 📚 Índice da Documentação - Sistema de Agentes Autônomos
+# Documentação do Sistema de Agentes Autônomos
 
-> **Documentação Reorganizada** - Versão 2.0 (Fevereiro 2024)
-> 
-> Esta documentação foi completamente reorganizada para melhor navegabilidade e clareza.
-> Consulte o [Histórico de Revisões](../README.md#-histórico-de-revisões) para detalhes.
+## Índice Geral
+
+### 📋 Documentação Principal Consolidada
+
+| Documento | Descrição | Conteúdo |
+|-----------|-----------|----------|
+| **[README](README.md)** | Visão geral do projeto | Introdução, objetivos, tecnologias |
+| **[OVERVIEW](OVERVIEW.md)** | Visão geral completa do sistema | Propósito, arquitetura de módulos, desenvolvimento, testes, fluxos, TODO, referências |
+| **[ARCHITECTURE](ARCHITECTURE.md)** | Arquitetura detalhada | Padrões, componentes, diagramas |
+| **[AGENTS](AGENTS.md)** | Documentação completa dos agentes | Todos os agentes (core, auxiliares, avançados), especificações, lifecycle |
+| **[API](API.md)** | Documentação da API | Endpoints, schemas, exemplos |
+| **[SETUP](SETUP.md)** | Configuração e instalação | Pré-requisitos, instalação, configuração, SQS, Grafana, dependências |
+| **[DEVELOPMENT](DEVELOPMENT.md)** | Guia de desenvolvimento | Ambiente, padrões, testes, CI/CD |
+| **[OPERATIONS_BACKUP](OPERATIONS_BACKUP.md)** | Operações e backup | Manual operacional, backup, recuperação, monitoramento, troubleshooting |
+| **[OPERATIONS](OPERATIONS.md)** | Operações do sistema | Procedimentos operacionais, manutenção |
+
+### 🏗️ Documentação Especializada
+
+| Documento | Descrição |
+|-----------|-----------|
+| **[ARCHITECTURE_DIAGRAMS](ARCHITECTURE_DIAGRAMS.md)** | Diagramas de arquitetura |
+| **[CONTRIBUTING](CONTRIBUTING.md)** | Guia de contribuição |
 
 ## 🎯 Documentos Essenciais
 
