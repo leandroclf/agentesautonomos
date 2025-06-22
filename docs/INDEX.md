@@ -15,6 +15,7 @@
 | **[DEVELOPMENT](DEVELOPMENT.md)** | Guia de desenvolvimento | Ambiente, padrões, testes, CI/CD |
 | **[OPERATIONS_BACKUP](OPERATIONS_BACKUP.md)** | Operações e backup | Manual operacional, backup, recuperação, monitoramento, troubleshooting |
 | **[OPERATIONS](OPERATIONS.md)** | Operações do sistema | Procedimentos operacionais, manutenção |
+| **[HIVEPLACE_IMPLEMENTATION_PLAN](HIVEPLACE_IMPLEMENTATION_PLAN.md)** | 🆕 Plano HivePlace | Implementação do projeto HivePlace usando arquitetura de agentes |
 
 ### 🏗️ Documentação Especializada
 
@@ -22,6 +23,12 @@
 |-----------|-----------|
 | **[ARCHITECTURE_DIAGRAMS](ARCHITECTURE_DIAGRAMS.md)** | Diagramas de arquitetura |
 | **[CONTRIBUTING](CONTRIBUTING.md)** | Guia de contribuição |
+
+### 🚀 Projetos e Implementações
+
+| Documento | Descrição |
+|-----------|-----------|
+| **[HIVEPLACE_IMPLEMENTATION_PLAN](HIVEPLACE_IMPLEMENTATION_PLAN.md)** | Plano completo de implementação do HivePlace |
 
 ## 🎯 Documentos Essenciais
 
@@ -178,6 +185,13 @@
 3. 🧪 **Teste o sistema**: [Como Testar Eventos](./COMO_TESTAR_EVENTOS.md)
 4. 🏗️ **Entenda a arquitetura**: [Arquitetura](./ARCHITECTURE.md)
 5. 💻 **Desenvolva**: [Development](./DEVELOPMENT.md)
+
+### Para Stakeholders e Product Managers
+
+1. 🏢 **Plano de negócio**: [HivePlace Implementation Plan](./HIVEPLACE_IMPLEMENTATION_PLAN.md)
+2. 📋 **Visão técnica**: [Overview](./OVERVIEW.md)
+3. 🏗️ **Arquitetura**: [Architecture](./ARCHITECTURE.md)
+4. ⚙️ **Operações**: [Operations Backup](./OPERATIONS_BACKUP.md)
 
 ### Para Desenvolvedores Experientes
 
