@@ -1,5 +1,7 @@
 # Sistema de Agentes Autônomos
 
+> **Portfolio status (2026-10-06): legacy/reference.** New orchestration work belongs in [ai-engineering-team](https://github.com/leandroclf/ai-engineering-team). Preserve this repository for comparison and migration evidence; do not extend its agent runtime unless a measured workload demonstrates a capability missing from the canonical runtime.
+
 [![Node.js](https://img.shields.io/badge/Node.js-18.x-green.svg)](https://nodejs.org/)
 [![Express](https://img.shields.io/badge/Express-4.18.x-blue.svg)](https://expressjs.com/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
